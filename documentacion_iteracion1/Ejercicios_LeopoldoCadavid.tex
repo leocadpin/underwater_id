@@ -1,0 +1,90 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel} %Paquete de idioma
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{eso-pic}
+\usepackage{lipsum}
+\usepackage{transparent}
+\usepackage{parskip}
+%\usepackage[backend=biber, style=apa]{biblatex}
+
+\graphicspath{{imagenes/}}
+
+%%%%%%%%% ESTO PARA LA MARCA DE AGUA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\AddToShipoutPicture{ 
+    \put(410,380){
+        \parbox[b][\paperheight]{\paperwidth}{%
+            \vfill
+            \
+            {
+            \transparent{1}
+            \includegraphics[scale=0.5]{logo-ua.png}
+            \vfill
+            }
+        }
+    }
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Detección de tuberias en imagenes submarinas} \\
+
+
+
+\author{
+Leopoldo Cadavid Piñero
+}
+
+
+
+
+
+
+
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+      
+
+
+\section{Preprocesamiento}
+
+El preprocesamiento de la imagen constará de 2 partes:
+
+\begin{itemize}
+    
+    \item Aplicar una mascara para aumentar el contraste. Esto se hace para compensar
+    la distorsión en los colores provocada por la propagación de la luz a lo largo de la imagen.
+    
+
+
+    \item Posteriormente, se aplica un CAHE (o \textit{contrast-limited adaptive histogram equalization} ).
+    con el objetivo de redistribuir la luminiscencia en la imagen. 
+    
+    
+
+\end{itemize}
+
+
+
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.1]{tarea_1roscore.png}
+%     \caption{Lanzamos el master}
+%     \label{fig:tarea1roscore}
+% \end{figure}
+
+
+
+\end{document}
