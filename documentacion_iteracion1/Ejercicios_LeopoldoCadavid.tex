@@ -75,8 +75,47 @@ El preprocesamiento de la imagen constará de 2 partes:
 
 \end{itemize}
 
+La aplicación de los métodos da como resultado una imagen mán nítida y contrastada
+ donde es más fácil aplicar los algoritmos para la segmentación y detección de las estructuras.
 
 
+\section{Deteccion del objeto}
+
+\subsection{Primera aproximación}
+
+Siguiendo con los métodos referenciados, se propone el uso de un filtro sobel para obtener
+las respuestas de gradiente, y añadir esta respuesta de gradiente a un vector de características,
+con el objetivo de dividir la imagen según estas características en diferentes clusters. Para ello se pretende usar el algoritmo
+k-means. 
+
+\textbf{Primeros resultados:} tras aplicar el método descrito, las clusterización no arroja una segmentación prometedora.
+Los fallos posibles:
+\begin{itemize}
+    \item Que los bordes no sean una características significativa a la hora de detectar
+    el objeto. 
+
+    \item Una implementación errónea del algoritmo a partir de la descripción. 
+    \item Una representación errónea de los datos.
+\end{itemize}
+
+
+-Tras la comprobación de las distintas transformaciones aplicadas a la imagen, se observa que la conversión de escala rgb a escala 
+de grises provoca una gran perdida de información, afectando esto al uso del algoritmo Sobel, pues se pierde información importante del cambio de 
+gradiente en ciertos canales de color de la imagen.
+
+A raíz de esto, se ha aplicado el filtro sobel a cada uno de los canales de la imagen por separado. Posteriormente, se calcula el gradiente medio de cada
+canal y se añade cada uno al algoritmo k-means. De esta forma se ha conseguido mejorar sustancialmente la clusterización. Aún así, no es suficiente como para que 
+haya separado la tuberia en la imagen de referencia. 
+
+Lo proximo a tratar será la detección de lineas en cada una de las imagenes de gradiente, para ver si estas facilitan el proceso de segmentado
+
+
+
+
+
+\section{Referencias}
+
+https://journals.sagepub.com/doi/10.5772/60526
 
 % \begin{figure}[H]
 %     \centering
