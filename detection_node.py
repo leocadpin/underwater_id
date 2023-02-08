@@ -43,7 +43,7 @@ class Nodo(object):
             "/camera/depth/image_raw", Image, self.callback)
         # self.sub2 = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback2)
         
-        
+        #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
         
 
     
