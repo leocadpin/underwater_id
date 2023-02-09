@@ -12,11 +12,28 @@ import math
 from pyparsing import RecursiveGrammarException
 from torch import sqrt_
 
-path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img1.webp'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img2.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img1.webp'
+path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img2.png'
 img = cv.imread(path)
 
 
+def morphology_filters(edges):
+        # Forma del filtro
+    erosion_type = cv.MORPH_RECT
+    erosion_type2 = cv.MORPH_ELLIPSE
+    # El último parámetro es el tamaño del filtro, en este caso 5x5
+    element = cv.getStructuringElement(erosion_type, (4,4)) 
+    element2 = cv.getStructuringElement(erosion_type2, (4,4)) 
+    element3 = cv.getStructuringElement(erosion_type2, (1,1))
+
+    # dst = cv.erode(dst,element2)
+    # dst = cv.morphologyEx(img_meanshift, cv.MORPH_CLOSE, element2)
+    # dst2 = cv.morphologyEx(dst, cv.MORPH_CLOSE, element2)
+    edges_erode = cv.dilate(edges, element)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element3)
+    return edges_erode
 #-------------------------------------  PRE-PROCESAMIENTO   ----------------------
 # img2 = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 img_lab = cv.cvtColor(img, cv.COLOR_RGB2LAB)
@@ -113,18 +130,21 @@ b_abs_grad = cv.addWeighted(b_abs_grad_x, 0.5, b_abs_grad_y, 0.5, 0)
 
 edges = cv.Canny(b_abs_grad, 50, 200, None, 3)
 
+
+edges_erode = morphology_filters(edges)
 # Ejecutamos Hough
-lines = cv.HoughLinesP(edges, 1, np.pi/180, 10, 30, 70, 10)
+lines = cv.HoughLinesP(edges_erode, 1, np.pi/180, 10, 30, 60, 7)
 
 # Dibujamos las líneas resultantes sobre una copia de la imagen original
 dst = img.copy()
 if lines is not None:
     for i in range(0, len(lines)):
         l = lines[i][0]
-        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 2, cv.LINE_AA)
+        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
 
 imshow('bordes', edges)
 imshow('Lineas', dst)
+imshow('Lineas_erode', edges_erode)
 #CREAMOS VECTOR DE FEATURES
 h, s, v = cv.split(img_hsv)
 
