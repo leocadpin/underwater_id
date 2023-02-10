@@ -8,13 +8,23 @@ from cv2 import merge
 import numpy as np
 import argparse
 import math
-
+import os
 from pyparsing import RecursiveGrammarException
 from torch import sqrt_
 
 # path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img1.webp'
 # path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img2.png'
-path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img3.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img3.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img4.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img5.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img6.png'
+# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img7.png'
+
+# Read the image
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required = True, help = "nombre de la imagen")
+args = vars(ap.parse_args())
+path = os.path.join('images', args['image'])
 img = cv.imread(path)
 
 # print('Original Dimensions : ',img.shape)
@@ -29,7 +39,7 @@ img = cv.imread(path)
  
 # print('Resized Dimensions : ',resized.shape)
  
-# # cv.imshow("Resized image", resized)
+# cv.imshow("Resized image", resized)
 
 # img= resized
 
@@ -38,22 +48,18 @@ def morphology_filters(edges):
     erosion_type = cv.MORPH_RECT
     erosion_type2 = cv.MORPH_ELLIPSE
     # El último parámetro es el tamaño del filtro, en este caso 5x5
-    element = cv.getStructuringElement(erosion_type, (4,4)) 
-    element2 = cv.getStructuringElement(erosion_type2, (4,4)) 
+    # element = cv.getStructuringElement(erosion_type, (4,4)) 
+    # element2 = cv.getStructuringElement(erosion_type2, (4,4)) 
     element3 = cv.getStructuringElement(erosion_type2, (1,1))
-
+    element4 = cv.getStructuringElement(erosion_type, (1,1)) 
     # dst = cv.erode(dst,element2)
     # dst = cv.morphologyEx(img_meanshift, cv.MORPH_CLOSE, element2)
     # dst2 = cv.morphologyEx(dst, cv.MORPH_CLOSE, element2)
-    edges_erode = cv.dilate(edges, element)
-    edges_erode = cv.erode(edges_erode, element2)
-    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.dilate(edges, element4)
+    edges_erode = cv.dilate(edges_erode, element4)
+  
     edges_erode = cv.erode(edges_erode, element3)
-    edges_erode = cv.erode(edges_erode, element3)
-    edges_erode = cv.erode(edges_erode, element3)
-    edges_erode = cv.erode(edges_erode, element3)
-    edges_erode = cv.erode(edges_erode, element3)
-    edges_erode = cv.erode(edges_erode, element3)
+   
     return edges_erode
 #-------------------------------------  PRE-PROCESAMIENTO   ----------------------
 def preprocessing(img):
@@ -136,7 +142,7 @@ def splitted_sobels(img_rgb):
     g_abs_grad_x = cv.convertScaleAbs(g_grad_x)
     g_abs_grad_y = cv.convertScaleAbs(g_grad_y)
 
-    b_grad_x = cv.Sobel(b_img, ddepth, 1, 0, ksize=9, scale=1, delta=0, borderType=cv.BORDER_DEFAULT)
+    b_grad_x = cv.Sobel(b_img, ddepth, 1, 0, ksize=3, scale=1, delta=0, borderType=cv.BORDER_DEFAULT)
     b_grad_y = cv.Sobel(b_img, ddepth, 0, 1, ksize=3, scale=1, delta=0, borderType=cv.BORDER_DEFAULT)
         
     b_abs_grad_x = cv.convertScaleAbs(b_grad_x)
@@ -176,16 +182,23 @@ r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges = multi_e
                                                           b_abs_grad)
     
 # Ejecutamos Hough
-min_long = int(columns*0.25)
-min_gap = int(columns*0.025)
-r_lines = cv.HoughLinesP(r_edges_erode, 1, np.pi/180, 10, 30, min_long, min_gap)
-g_lines = cv.HoughLinesP(g_edges_erode, 1, np.pi/180, 10, 30, min_long, min_gap)
-b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 10, 30, min_long, min_gap)
+def get_rgbchannel_lines(r_edges_erode, g_edges_erode, b_edges_erode, columns):
+    
+    min_long = int(columns*0.30)
+    min_gap = int(columns*0.03)
+    r_lines = cv.HoughLinesP(r_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
+    g_lines = cv.HoughLinesP(g_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
+    b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
+    return r_lines, g_lines, b_lines
+r_lines, g_lines, b_lines = get_rgbchannel_lines(r_edges_erode,
+                                                 g_edges_erode,
+                                                 b_edges_erode,
+                                                 columns)
 
 # Dibujamos las líneas resultantes sobre una copia de la imagen original
-dst = img.copy()
-dst2 = img.copy()
-dst3 = img.copy()
+# dst = img.copy()
+# dst2 = img.copy()
+# dst3 = img.copy()
 
 if r_lines is not None:
     for i in range(0, len(r_lines)):
@@ -194,26 +207,16 @@ if r_lines is not None:
 if g_lines is not None:
     for i in range(0, len(g_lines)):
         l = g_lines[i][0]
-        cv.line(dst2, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
 if b_lines is not None:
     for i in range(0, len(b_lines)):
         l = b_lines[i][0]
-        cv.line(dst3, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
 
+# all_lines = [*r_lines, *g_lines, *b_lines]
 
-imshow('gradientes de red channel', r_abs_grad)
-imshow('gradientes de green channel', g_abs_grad)
-imshow('gradientes de blue channel', b_abs_grad)
-imshow('bordes_erode r', r_edges_erode)
-imshow('bordes_erode g', g_edges_erode)
-imshow('bordes_erode b', b_edges_erode)
-imshow('bordes r', r_edges)
-imshow('bordes g', g_edges)
-imshow('bordes b', b_edges)
-imshow('Lineas r', dst)
-imshow('Lineas g', dst2)
-imshow('Lineas b', dst3)
-# imshow('Lineas_erode', edges_erode)
+# print(all_lines)
+
 #CREAMOS VECTOR DE FEATURES
 h, s, v = cv.split(img_hsv)
 
@@ -224,29 +227,35 @@ img_grad = cv.merge((h, s, v, r_abs_grad, g_abs_grad, b_abs_grad))
 # imshow('img_grad', img_grad)
 
 # # ## Uso de k-means
+def k_means_for_feature_vector(img_grad):
+    # Z = img_grad.reshape((-1,4))
+    Z = img_grad.reshape((-1,6))
 
-# Z = img_grad.reshape((-1,4))
-Z = img_grad.reshape((-1,6))
+    # # convert to np.float32
+    Z = np.float32(Z)
+    # # define criteria, number of clusters(K) and apply kmeans()
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    K = 4
+    ret,label,center=cv.kmeans(Z,K,None,criteria,10,cv.KMEANS_RANDOM_CENTERS)
+    # # Now convert back into uint8, and make original image
+    center = np.uint8(center)
+    res = center[label.flatten()]
+    res2 = res.reshape((img_grad.shape))
 
-# # convert to np.float32
-Z = np.float32(Z)
-# # define criteria, number of clusters(K) and apply kmeans()
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-K = 4
-ret,label,center=cv.kmeans(Z,K,None,criteria,10,cv.KMEANS_RANDOM_CENTERS)
-# # Now convert back into uint8, and make original image
-center = np.uint8(center)
-res = center[label.flatten()]
-res2 = res.reshape((img_grad.shape))
+    # r,g,b,grad1 = cv.split(res2)
+    r,g,b,grad1, grad2, grad3 = cv.split(res2)
 
-# r,g,b,grad1 = cv.split(res2)
-r,g,b,grad1, grad2, grad3 = cv.split(res2)
+    res2 = merge((r,g,b))
+    return res2
 
-res2 = merge((r,g,b))
+def k_means_for_printed_lines():
+
 # # cv.imshow('imgdeg',img_grad)  
 # cv.imshow('dst',res2)  
       
    
+
+                ######------- IMSHOWS--------- #######
      
 # imshow('resultado preprocesamiento', result_prep)
 # imshow('entrada', img)
@@ -258,7 +267,19 @@ res2 = merge((r,g,b))
 # # imshow('res2', res2) 
 # # imshow('resultado preprocesamiento CLAHE', result2)
 
-
+# imshow('gradientes de red channel', r_abs_grad)
+# imshow('gradientes de green channel', g_abs_grad)
+# imshow('gradientes de blue channel', b_abs_grad)
+# imshow('bordes_erode r', r_edges_erode)
+# imshow('bordes_erode g', g_edges_erode)
+# imshow('bordes_erode b', b_edges_erode)
+# imshow('bordes r', r_edges)
+# imshow('bordes g', g_edges)
+# imshow('bordes b', b_edges)
+imshow('Lineas r', dst)
+# imshow('Lineas g', dst2)
+# imshow('Lineas b', dst3)
+# imshow('Lineas_erode', edges_erode)
 
 
 
