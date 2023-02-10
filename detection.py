@@ -11,7 +11,8 @@ import math
 import os
 from pyparsing import RecursiveGrammarException
 from torch import sqrt_
-
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import ward, fcluster    
 # path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img1.webp'
 # path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img2.png'
 # path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img3.png'
@@ -185,35 +186,65 @@ r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges = multi_e
 def get_rgbchannel_lines(r_edges_erode, g_edges_erode, b_edges_erode, columns):
     
     min_long = int(columns*0.30)
-    min_gap = int(columns*0.03)
-    r_lines = cv.HoughLinesP(r_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
-    g_lines = cv.HoughLinesP(g_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
-    b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 60, 30, min_long, min_gap)
+    min_gap = int(columns*0.025)
+    r_lines = cv.HoughLinesP(r_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
+    g_lines = cv.HoughLinesP(g_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
+    b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
+    print(b_lines)
     return r_lines, g_lines, b_lines
 r_lines, g_lines, b_lines = get_rgbchannel_lines(r_edges_erode,
                                                  g_edges_erode,
                                                  b_edges_erode,
                                                  columns)
 
-# Dibujamos las líneas resultantes sobre una copia de la imagen original
-# dst = img.copy()
-# dst2 = img.copy()
-# dst3 = img.copy()
 
-if r_lines is not None:
-    for i in range(0, len(r_lines)):
-        l = r_lines[i][0]
-        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
-if g_lines is not None:
-    for i in range(0, len(g_lines)):
-        l = g_lines[i][0]
-        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
-if b_lines is not None:
-    for i in range(0, len(b_lines)):
-        l = b_lines[i][0]
-        cv.line(dst, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+printed_lines_img = img.copy()
+def print_lines_and_get_all_lines(r_lines, g_lines, b_lines, printed_lines_img):
+    # Dibujamos las líneas resultantes sobre una copia de la imagen original
+    # dst = img.copy()
+    # dst2 = img.copy()
+    # dst3 = img.copy()
+    # print('que pasa')
+    rl = False
+    gl = False
+    bl = False
+    if r_lines is not None:        
+        rl= True
+        for i in range(0, len(r_lines)):
+            
+            l = r_lines[i][0]
+            cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+    if g_lines is not None:
+        gl = True
+        for i in range(0, len(g_lines)):
+            
+            l = g_lines[i][0]
+            cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+    if b_lines is not None:
+        bl = True
+        # all_lines = b_lines
+        for i in range(0, len(b_lines)):
+            l = b_lines[i][0]
+            cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
 
-# all_lines = [*r_lines, *g_lines, *b_lines]
+    if rl and gl and bl:
+        all_lines = np.concatenate((r_lines, g_lines,b_lines), axis=0)
+    elif rl and gl:
+        all_lines = np.concatenate((r_lines, g_lines), axis=0)
+    elif rl and bl:
+        all_lines = np.concatenate((r_lines, b_lines), axis=0)
+    elif gl and bl:    
+        all_lines = np.concatenate((g_lines, b_lines), axis=0)      
+    elif rl:
+        all_lines = r_lines
+    elif gl:
+        all_lines = g_lines
+    elif bl:        
+        all_lines = b_lines
+    return all_lines, printed_lines_img    
+all_lines, printed_lines_img = print_lines_and_get_all_lines(r_lines, g_lines, b_lines,printed_lines_img)
+
+# all_lines.append(g_lines)
 
 # print(all_lines)
 
@@ -226,7 +257,7 @@ img_grad = cv.merge((h, s, v, r_abs_grad, g_abs_grad, b_abs_grad))
 # # print(np.shape(img_grad))
 # imshow('img_grad', img_grad)
 
-# # ## Uso de k-means
+#### -------Uso de k-means ------ #####
 def k_means_for_feature_vector(img_grad):
     # Z = img_grad.reshape((-1,4))
     Z = img_grad.reshape((-1,6))
@@ -248,14 +279,124 @@ def k_means_for_feature_vector(img_grad):
     res2 = merge((r,g,b))
     return res2
 
-def k_means_for_printed_lines():
+def k_means_for_printed_lines(printed_lines_img):
+    # Reshaping the image into a 2D array of pixels and 3 color values (RGB)
+    pixel_vals = printed_lines_img.reshape((-1,3))
+
+    # Convert to float type
+    pixel_vals = np.float32(pixel_vals)
+    #the below line of code defines the criteria for the algorithm to stop running,
+    #which will happen is 100 iterations are run or the epsilon (which is the required accuracy)
+    #becomes 85%
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.85)
+
+    # then perform k-means clustering with number of clusters defined as 3
+    #also random centres are initially choosed for k-means clustering
+    k = 4
+    retval, labels, centers = cv.kmeans(pixel_vals, k, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
+
+    # convert data into 8-bit values
+    centers = np.uint8(centers)
+    segmented_data = centers[labels.flatten()]
+
+    # reshape data into the original image dimensions
+    segmented_image = segmented_data.reshape((printed_lines_img.shape))
+
+    return segmented_image
+
+# segmented_img = k_means_for_printed_lines(printed_lines_img)
 
 # # cv.imshow('imgdeg',img_grad)  
 # cv.imshow('dst',res2)  
-      
-   
 
-                ######------- IMSHOWS--------- #######
+def findparallel(all_lines):    
+    # print(all_lines)
+    parallel_lines = []
+    for i in range(len(all_lines)):
+        for j in range(len(all_lines)):
+            if (i == j):continue
+            # print('linea 1 ', all_lines[i][0], ' - ', 'linea 2', all_lines[j][0])
+            
+            xa_1 = all_lines[i][0][0] 
+            ya_1 = all_lines[i][0][1] 
+             
+            xb_1 = all_lines[i][0][2] 
+            yb_1 = all_lines[i][0][3] 
+            
+            # print((yb_1-ya_1))
+            # print(xb_1-xa_1)
+            m1 = (yb_1-ya_1)/(xb_1-xa_1)
+            # b1 = ya_1 - m1*xa_1
+            
+            
+            xa_2 = all_lines[j][0][0] 
+            ya_2 = all_lines[j][0][1] 
+             
+            xb_2 = all_lines[j][0][2] 
+            yb_2 = all_lines[j][0][3] 
+            
+            m2 = (yb_2-ya_2)/(xb_2-xa_2)
+            # b2 = ya_2 - m2*xa_2
+            m_dif = m1-m2
+            if m1 >= 60:
+                slopediff_threshold = 60
+            if m1 <60:
+                slopediff_threshold = 3    
+            # print(xa_1, ya_1, xb_1, yb_1)
+            # print(m1,' - ', m2, '=', m_dif)
+            if (abs(m1 - m2) < slopediff_threshold ):          
+             #You've found a parallel line!
+                # print('cumplen la condicion')
+                # parallel_lines.append(all_lines[i])
+                parallel_lines.append(all_lines[j])
+                
+                
+                # print(parallel_lines)             
+                # parallel_lines = np.concatenate((parallel_lines,all_lines[i]), axis=0)
+                # parallel_lines = np.concatenate((parallel_lines,all_lines[j]), axis=0)
+
+    # parallel_lines = np.unique(parallel_lines)
+    return parallel_lines
+# def find_parallel_lines(lines):
+
+    lines_ = lines[:, 0, :]
+    angle = lines_[:, 1]
+
+    # Perform hierarchical clustering
+
+    angle_ = angle[..., np.newaxis]
+    y = pdist(angle_)
+    Z = ward(y)
+    cluster = fcluster(Z, 0.5, criterion='distance')
+
+    parallel_lines = []
+    for i in range(cluster.min(), cluster.max() + 1):
+        temp = lines[np.where(cluster == i)]
+        parallel_lines.append(temp.copy())
+
+    return parallel_lines
+
+printed_lines_img_2 = img.copy()
+# parallel_lines = find_parallel_lines(all_lines)
+parallel_lines = findparallel(all_lines)
+# print(g_lines)
+# print(all_lines)
+# print(parallel_lines)
+if parallel_lines is not None:        
+    
+    for i in range(0, len(parallel_lines)): 
+               
+        l = parallel_lines[i][0]
+        # print(l[0])
+        cv.line(printed_lines_img_2, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+
+
+
+
+
+
+
+######------- IMSHOWS--------- #######
      
 # imshow('resultado preprocesamiento', result_prep)
 # imshow('entrada', img)
@@ -276,7 +417,9 @@ def k_means_for_printed_lines():
 # imshow('bordes r', r_edges)
 # imshow('bordes g', g_edges)
 # imshow('bordes b', b_edges)
-imshow('Lineas r', dst)
+imshow('Lineas r', printed_lines_img)
+imshow('Filtro paralelas', printed_lines_img_2)
+# imshow('Imagen segmentada', segmented_img)
 # imshow('Lineas g', dst2)
 # imshow('Lineas b', dst3)
 # imshow('Lineas_erode', edges_erode)
