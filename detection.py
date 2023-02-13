@@ -13,13 +13,7 @@ from pyparsing import RecursiveGrammarException
 from torch import sqrt_
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import ward, fcluster    
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img1.webp'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img2.png'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img3.png'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img4.png'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img5.png'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img6.png'
-# path = '/home/leo/Escritorio/Uware/1_imagenes/underwater_id/images/img7.png'
+
 
 # Read the image
 ap = argparse.ArgumentParser()
@@ -62,7 +56,7 @@ def morphology_filters(edges):
     edges_erode = cv.erode(edges_erode, element3)
    
     return edges_erode
-#-------------------------------------  PRE-PROCESAMIENTO   ----------------------
+#-------------------------------------  PRE-PROCESSING  ----------------------
 def preprocessing(img):
     # img2 = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     img_lab = cv.cvtColor(img, cv.COLOR_RGB2LAB)
@@ -93,16 +87,19 @@ result_prep = preprocessing(img)
 
 #--------------Clusterización -----------------------------------------#
 
-#Primero se crea un vector de caracteristicas
+
 rows, columns, channel  = result_prep.shape
 features = np.zeros(shape=(rows,columns, 6))
 
+
 img_rgb = cv.bilateralFilter(result_prep, 15, 90, 90)
 img_rgb = cv.pyrMeanShiftFiltering(img_rgb, 20, 20)
+
 # img_rgb = result_prep
-img_hsv = cv.cvtColor(img_rgb, cv.COLOR_RGB2HSV)
+# img_hsv = cv.cvtColor(img_rgb, cv.COLOR_RGB2HSV)
 
 
+##We apply Sobel to each channel
 def splitted_sobels(img_rgb):
     # Conversion a escala de grises 
     r_img , g_img, b_img = split(img_rgb)
@@ -162,9 +159,8 @@ def splitted_sobels(img_rgb):
     # imshow('b_img_channel', b_abs_grad)
     # # print(np.shape(features))
     return r_abs_grad, g_abs_grad, b_abs_grad
-
-
 r_abs_grad, g_abs_grad, b_abs_grad = splitted_sobels(img_rgb)
+
 
 def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
     aperture_size = 3
@@ -177,7 +173,6 @@ def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
     g_edges_erode = morphology_filters(g_edges)
     b_edges_erode = morphology_filters(b_edges)
     return r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges
-
 r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges = multi_edges(r_abs_grad,
                                                           g_abs_grad,
                                                           b_abs_grad)
@@ -190,7 +185,7 @@ def get_rgbchannel_lines(r_edges_erode, g_edges_erode, b_edges_erode, columns):
     r_lines = cv.HoughLinesP(r_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
     g_lines = cv.HoughLinesP(g_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
     b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 70, 30, min_long, min_gap)
-    print(b_lines)
+    
     return r_lines, g_lines, b_lines
 r_lines, g_lines, b_lines = get_rgbchannel_lines(r_edges_erode,
                                                  g_edges_erode,
@@ -249,10 +244,10 @@ all_lines, printed_lines_img = print_lines_and_get_all_lines(r_lines, g_lines, b
 # print(all_lines)
 
 #CREAMOS VECTOR DE FEATURES
-h, s, v = cv.split(img_hsv)
+# h, s, v = cv.split(img_hsv)
 
 # img_grad = cv.merge((h, s, v, b_abs_grad))
-img_grad = cv.merge((h, s, v, r_abs_grad, g_abs_grad, b_abs_grad))
+# img_grad = cv.merge((h, s, v, r_abs_grad, g_abs_grad, b_abs_grad))
 
 # # print(np.shape(img_grad))
 # imshow('img_grad', img_grad)
@@ -309,9 +304,10 @@ def k_means_for_printed_lines(printed_lines_img):
 # # cv.imshow('imgdeg',img_grad)  
 # cv.imshow('dst',res2)  
 
-def findparallel(all_lines):    
+def findparallel(all_lines, columns):    
     # print(all_lines)
     parallel_lines = []
+    dist_threshold = columns*0.25
     for i in range(len(all_lines)):
         for j in range(len(all_lines)):
             if (i == j):continue
@@ -336,15 +332,29 @@ def findparallel(all_lines):
             yb_2 = all_lines[j][0][3] 
             
             m2 = (yb_2-ya_2)/(xb_2-xa_2)
+            ## Paralelismo basado en pendiente ##
             # b2 = ya_2 - m2*xa_2
-            m_dif = m1-m2
-            if m1 >= 60:
-                slopediff_threshold = 60
-            if m1 <60:
-                slopediff_threshold = 3    
+            # m_dif = m1-m2
+            # if m1 >= 60:
+            #     slopediff_threshold = 60
+            # if m1 <60:
+            #     slopediff_threshold = 3    
             # print(xa_1, ya_1, xb_1, yb_1)
             # print(m1,' - ', m2, '=', m_dif)
-            if (abs(m1 - m2) < slopediff_threshold ):          
+            
+            ## Paralelismo basado en angulo respecto a la horizontal ##
+            ang1 = math.degrees(math.atan(m1))
+            ang2 = math.degrees(math.atan(m2))
+            ang_dif = abs(ang1-ang2)
+            ang_dif_threshold = 10
+            # print(ang1, ' ', ang2, ' ', ang_dif)
+            
+            ## Distancia entre paralelas:
+            dist_x = abs(xa_1-xa_2)
+            dist_y = abs(ya_1-ya_2)
+            
+            
+            if ( ang_dif <= ang_dif_threshold and dist_y < dist_threshold and dist_x < dist_threshold ):          
              #You've found a parallel line!
                 # print('cumplen la condicion')
                 # parallel_lines.append(all_lines[i])
@@ -378,7 +388,7 @@ def findparallel(all_lines):
 
 printed_lines_img_2 = img.copy()
 # parallel_lines = find_parallel_lines(all_lines)
-parallel_lines = findparallel(all_lines)
+parallel_lines = findparallel(all_lines, columns)
 # print(g_lines)
 # print(all_lines)
 # print(parallel_lines)
@@ -388,18 +398,34 @@ if parallel_lines is not None:
                
         l = parallel_lines[i][0]
         # print(l[0])
-        cv.line(printed_lines_img_2, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+        cv.line(printed_lines_img_2, (l[0], l[1]), (l[2], l[3]), (0,0,255), 2, cv.LINE_AA)
 
 
 
 
+# Remember -> OpenCV stores things in BGR order
+lowerBound = (0, 0, 255);
+upperBound = (0, 0, 255);
 
-
-
+# this gives you the mask for those in the ranges you specified,
+# but you want the inverse, so we'll add bitwise_not...
+final_mask = cv.inRange(printed_lines_img_2, lowerBound, upperBound, 1);
+erosion_type = cv.MORPH_RECT
+    
+    
+    
+    
+element = cv.getStructuringElement(erosion_type, (12,12))
+element2 = cv.getStructuringElement(erosion_type, (10,10))
+final_mask = cv.dilate(final_mask, element)  
+  
+final_mask = cv.morphologyEx(final_mask, cv.MORPH_CLOSE, element2)
+img_final = img.copy()
+img_final[final_mask==255] = (0, 0, 255)
 ######------- IMSHOWS--------- #######
      
 # imshow('resultado preprocesamiento', result_prep)
-# imshow('entrada', img)
+imshow('entrada', img)
 # imshow('post-filtrado bilateral y meanshift', img_rgb)  
 # imshow('grad con valor absoluto', abs_grad)
 # # imshow('grad con valor de raiz', sqr_grad) 
@@ -423,7 +449,7 @@ imshow('Filtro paralelas', printed_lines_img_2)
 # imshow('Lineas g', dst2)
 # imshow('Lineas b', dst3)
 # imshow('Lineas_erode', edges_erode)
-
+imshow('Resultado final', img_final)
 
 
 cv.waitKey(0)

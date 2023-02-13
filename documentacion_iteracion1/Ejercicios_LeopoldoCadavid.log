@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.18)  7 FEB 2023 18:55
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2022.2.18)  13 FEB 2023 14:24
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -263,21 +263,10 @@ Package: parskip 2020-01-22 v2.0d non-zero parskip adjustments
  (/usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty
 Package: etoolbox 2019/09/21 v2.5h e-TeX tools for LaTeX (JAW)
 \etb@tempcnta=\count273
-))
-
-/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.tex:36: LaTeX Error: There's no line here to end.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.36 
-     
-Your command was ignored.
-Type  I <command> <return>  to replace it with another command,
-or  <return>  to continue without it.
-
-(/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.aux)
+)) (/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.aux
+LaTeX Info: Redefining \. on input line 26.
+LaTeX Info: Redefining \% on input line 26.
+)
 \openout1 = `Ejercicios_LeopoldoCadavid.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 50.
@@ -312,6 +301,7 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 50.
 LaTeX Info: Redefining \pageref on input line 50.
 LaTeX Info: Redefining \nameref on input line 50.
+ (/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.out) (/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.out)
 \@outlinefile=\write3
 \openout3 = `Ejercicios_LeopoldoCadavid.out'.
 
@@ -334,67 +324,85 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
  (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-<logo-ua.png, id=4, 301.125pt x 301.125pt>
-File: logo-ua.png Graphic file (type png)
-<use logo-ua.png>
-Package pdftex.def Info: logo-ua.png  used on input line 53.
-(pdftex.def)             Requested size: 150.56212pt x 150.56212pt.
+<uware_logo.png, id=28, 521.95pt x 534.99875pt>
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 53.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} </home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/logo-ua.png>]
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} </home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/uware_logo.png>] (/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.toc
+LaTeX Info: Redefining \. on input line 1.
+LaTeX Info: Redefining \% on input line 1.
+)
 \tf@toc=\write4
 \openout4 = `Ejercicios_LeopoldoCadavid.toc'.
 
-File: logo-ua.png Graphic file (type png)
-<use logo-ua.png>
-Package pdftex.def Info: logo-ua.png  used on input line 55.
-(pdftex.def)             Requested size: 150.56212pt x 150.56212pt.
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 55.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
  [2]
-File: logo-ua.png Graphic file (type png)
-<use logo-ua.png>
-Package pdftex.def Info: logo-ua.png  used on input line 109.
-(pdftex.def)             Requested size: 150.56212pt x 150.56212pt.
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 109.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
  [3]
+<images_doc/sobel_canny_houghlines.png, id=56, 1522.68875pt x 875.27pt>
+File: images_doc/sobel_canny_houghlines.png Graphic file (type png)
+<use images_doc/sobel_canny_houghlines.png>
+Package pdftex.def Info: images_doc/sobel_canny_houghlines.png  used on input line 147.
+(pdftex.def)             Requested size: 456.81015pt x 262.58302pt.
 
-Package transparent Warning: Rerun to get transparencies right.
+Overfull \hbox (66.81015pt too wide) in paragraph at lines 147--148
+ [][] 
+ []
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 129.
-File: logo-ua.png Graphic file (type png)
-<use logo-ua.png>
-Package pdftex.def Info: logo-ua.png  used on input line 129.
-(pdftex.def)             Requested size: 150.56212pt x 150.56212pt.
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 151.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
 [4]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 129.
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 165.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
+ [5pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
+
+\AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
+                                                  \fi \fi 
+l.165 \end{itemize}
+                    </home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/images_doc/sobel_canny_houghlines.png>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 185.
+File: uware_logo.png Graphic file (type png)
+<use uware_logo.png>
+Package pdftex.def Info: uware_logo.png  used on input line 185.
+(pdftex.def)             Requested size: 52.19804pt x 53.503pt.
+ [6]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 185.
  (/home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.aux
 LaTeX Info: Redefining \. on input line 26.
 LaTeX Info: Redefining \% on input line 26.
 )
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 129.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 129.
-
-
-Package rerunfilecheck Warning: File `Ejercicios_LeopoldoCadavid.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `Ejercicios_LeopoldoCadavid.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  31ED0CEE7734C1DF3C35BAF1CF8583BD;224.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 129.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 185.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 185.
+Package rerunfilecheck Info: File `Ejercicios_LeopoldoCadavid.out' has not changed.
+(rerunfilecheck)             Checksum: ED24023D323F5DEA8DD79CF319D95195;354.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 185.
  ) 
 Here is how much of TeX's memory you used:
- 8283 strings out of 481239
- 129209 string characters out of 5920377
+ 8334 strings out of 481239
+ 130506 string characters out of 5920377
  578871 words of memory out of 5000000
- 23402 multiletter control sequences out of 15000+600000
- 535866 words of font info for 36 fonts, out of 8000000 for 9000
+ 23432 multiletter control sequences out of 15000+600000
+ 539147 words of font info for 48 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 35i,14n,41p,1006b,361s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-Output written on /home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.pdf (4 pages, 65888 bytes).
+ 35i,14n,41p,1006b,395s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on /home/leo/Escritorio/Uware/1_imagenes/underwater_id/documentacion_iteracion1/Ejercicios_LeopoldoCadavid.pdf (6 pages, 663297 bytes).
 PDF statistics:
- 50 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
- 10 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 95 PDF objects out of 1000 (max. 8388607)
+ 77 compressed objects within 1 object stream
+ 15 named destinations out of 1000 (max. 500000)
+ 59 words of extra memory for PDF output out of 10000 (max. 10000000)
 

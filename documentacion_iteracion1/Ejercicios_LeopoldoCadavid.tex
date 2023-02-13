@@ -151,6 +151,22 @@ en este caso han sido los siguientes:
 
 \section{Filtrado de líneas}
 
+A partir de las líneas extraidas, se busca eliminar líneas que no sean correspondientes con las pertenencientes a la tubería. Para ello, se analizará 
+tantto el grado de paralelismo como la distancia entre estas. 
+
+La idea es analizar en el vector de líneas cada par de estas de la siguiente forma: 
+
+\begin{itemize}
+    \item Se calcula la pendiente y el ángulo de cada una de estas respecto a la frontal
+    \item Se comparan los ángulos y, si se encuentran por debajo de cierto umbral, se considerarán paralelas las líneas
+    \item Se mide las distancias en X e Y de los puntos iniciales de cada línea, y nos quedamos con las que se encuentren por debajo 
+    de un umbral de distancia 
+    \item Las líneas que cumplan todas las condiciones se guardarán en un vector de líneas paralelas
+\end{itemize}
+
+
+
+
 
 
 \section{Referencias}

@@ -1,5 +1,7 @@
 \babel@toc {spanish}{}
 \contentsline {section}{\numberline {1}Preprocesamiento}{3}{section.1}%
-\contentsline {section}{\numberline {2}Deteccion del objeto}{3}{section.2}%
+\contentsline {section}{\numberline {2}Deteccion de líneas}{3}{section.2}%
 \contentsline {subsection}{\numberline {2.1}Primera aproximación}{3}{subsection.2.1}%
-\contentsline {section}{\numberline {3}Referencias}{4}{section.3}%
+\contentsline {subsection}{\numberline {2.2}Segunda aproximación}{4}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Filtrado de líneas}{5}{section.3}%
+\contentsline {section}{\numberline {4}Referencias}{6}{section.4}%
