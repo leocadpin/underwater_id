@@ -12,19 +12,20 @@
 \usepackage{parskip}
 %\usepackage[backend=biber, style=apa]{biblatex}
 
-\graphicspath{{imagenes/}}
+\graphicspath{{images_doc/}}
 
 %%%%%%%%% ESTO PARA LA MARCA DE AGUA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \AddToShipoutPicture{ 
-    \put(410,380){
+    \put(470,370){
         \parbox[b][\paperheight]{\paperwidth}{%
             \vfill
             \
             {
             \transparent{1}
-            \includegraphics[scale=0.5]{logo-ua.png}
+            \includegraphics[scale=0.1]{uware_logo.png}
+            % \includegraphics[scale=0.5]{logo-ua.png}
             \vfill
             }
         }
@@ -32,8 +33,7 @@
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{Detección de tuberias en imagenes submarinas} \\
-
+\title{Detección de tuberías en imágenes submarinas} 
 
 
 \author{
@@ -57,7 +57,7 @@ Leopoldo Cadavid Piñero
       
 
 
-\section{Preprocesamiento}
+\section{Preprocesamiento}\label{ch:preprocesamiento}
 
 El preprocesamiento de la imagen constará de 2 partes:
 
@@ -79,7 +79,7 @@ La aplicación de los métodos da como resultado una imagen mán nítida y contr
  donde es más fácil aplicar los algoritmos para la segmentación y detección de las estructuras.
 
 
-\section{Deteccion del objeto}
+\section{Deteccion de líneas}
 
 \subsection{Primera aproximación}
 
@@ -107,9 +107,49 @@ A raíz de esto, se ha aplicado el filtro sobel a cada uno de los canales de la 
 canal y se añade cada uno al algoritmo k-means. De esta forma se ha conseguido mejorar sustancialmente la clusterización. Aún así, no es suficiente como para que 
 haya separado la tuberia en la imagen de referencia. 
 
-Lo proximo a tratar será la detección de lineas en cada una de las imagenes de gradiente, para ver si estas facilitan el proceso de segmentado
+Lo proximo a tratar será la detección de lineas en cada una de las imagenes de gradiente, para ver si estas facilitan el proceso de segmentado.
 
+\subsection{Segunda aproximación}
 
+En este caso, tomando como base ciertas ideas comentadas en la anterior aproximación, 
+se trata de conseguir la detección de forma distinta al paper estudiado. Los pasos seguidos 
+en este caso han sido los siguientes: 
+
+\begin{itemize}
+    
+    \item Realizar el preprocesamiento, tal y como se describe en \Ref{ch:preprocesamiento}.
+    
+    \item Aplicar un filtro bilateral para eliminar cierto ruido del fondo de las imágenes.
+    
+    \item Aplicar el algoritmo \verb|PyrMeanShift()|, para que la imagen quede segmentada por colores.
+    
+    \item Aplicar el  algoritmo \textbf{Sobel()}, a cada uno de los canales de la imagen 
+    RGB preprocesada. Esto se hace para obtener los cambios de gradiente y se aplica por igual 
+    a los ejes X e Y, realizando una suma ponderada de ambos con el fin de obtener el 
+    cambio en distintas direcciones. 
+
+    \item Obtener, a partir de los gradientes, bordes en las imágenes aplicando el 
+    algoritmo \verb|Canny()|.
+
+    \item Utilizamos filtros morfológicos para erosionar y dilatar, tratando de eliminar,
+    elementos circulares que puedan molestar y amplificando los elementos rectangulares.
+
+    \item Teniendo los bordes filtrados, se utiliza la transformada de Hough para encontrar líneas en 
+    dentro de la imágen.
+
+    \item A partir de los 3 vectores de líneas que tenemos, creamos uno nuevo donde juntaremos
+    \textbf{todas la líneas de la imagen}. 
+    
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.3]{sobel_canny_houghlines.png}
+    \caption{Líneas obtenidas para cada canal en una de las imágenes estudiadas}
+    \label{fig:sobelcanny}
+\end{figure}
+
+\section{Filtrado de líneas}
 
 
 
