@@ -2,7 +2,8 @@
 
 \usepackage{amsmath}
 \usepackage[utf8]{inputenc}
-\usepackage[spanish]{babel} %Paquete de idioma
+\usepackage[english]{babel}
+% \usepackage[spanish]{babel} %Paquete de idioma
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 \usepackage{float}
@@ -33,7 +34,7 @@
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{Detección de tuberías en imágenes submarinas} 
+\title{Underwater pipe detector program   - Version 1} 
 
 
 \author{
@@ -50,26 +51,41 @@ Leopoldo Cadavid Piñero
 \begin{document}
 
 \maketitle
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{images_doc/titel.png}
+    
+    \label{fig:repre}
+\end{figure}
+
 \newpage
 \tableofcontents
 \newpage
 
       
+\section{Intro}
 
+The main goal for this algorithm is to make possible human-made structures detection at underwater environments, making use of 
+classic computer vision techniques.
 
-\section{Preprocesamiento}\label{ch:preprocesamiento}
+Especifically, this first version of the algorithm is focused on pipes or similar structures. 
 
-El preprocesamiento de la imagen constará de 2 partes:
+\section{Preprocessing}\label{ch:preprocesamiento}
+
+First of all, is necessary to apply some preprocessing methods to get our images 
+\textit{cleaner} before trying to get features from them. Preprocessing pipeline 
+consist on 2 parts:
 
 \begin{itemize}
     
-    \item Aplicar una mascara para aumentar el contraste. Esto se hace para compensar
-    la distorsión en los colores provocada por la propagación de la luz a lo largo de la imagen.
-    
+    \item Apply a mask in order to increase contrast, decreasing L value in CIELAB channel space in our picture.
+    This is done because we want to
+    compensate colour distorsion result from ligth propagation along the picture. 
+        
 
-
-    \item Posteriormente, se aplica un CAHE (o \textit{contrast-limited adaptive histogram equalization} ).
-    con el objetivo de redistribuir la luminiscencia en la imagen. 
+    \item Second, we use a CLAHE ( \textit{contrast-limited adaptive histogram equalization} ) in order to 
+    \textbf{redistribute luminescence}.
     
     
 
@@ -79,93 +95,247 @@ La aplicación de los métodos da como resultado una imagen mán nítida y contr
  donde es más fácil aplicar los algoritmos para la segmentación y detección de las estructuras.
 
 
-\section{Deteccion de líneas}
+\section{Line detector}
 
-\subsection{Primera aproximación}
+\subsection{First approach}
 
 Siguiendo con los métodos referenciados, se propone el uso de un filtro sobel para obtener
 las respuestas de gradiente, y añadir esta respuesta de gradiente a un vector de características,
 con el objetivo de dividir la imagen según estas características en diferentes clusters. Para ello se pretende usar el algoritmo
 k-means. 
 
-\textbf{Primeros resultados:} tras aplicar el método descrito, las clusterización no arroja una segmentación prometedora.
-Los fallos posibles:
-\begin{itemize}
-    \item Que los bordes no sean una características significativa a la hora de detectar
-    el objeto. 
+Based on referenced papers, the use of Sobel filter to get gradient response on different directions. Then 
+this response would be used to create a \textbf{features vector}. The final step would be to classiffy objects 
+using K-means algorithm with this feature array as entrance. 
 
-    \item Una implementación errónea del algoritmo a partir de la descripción. 
-    \item Una representación errónea de los datos.
+% \textbf{Primeros resultados:} tras aplicar el método descrito, las clusterización no arroja una segmentación prometedora.
+% Los fallos posibles:
+% \begin{itemize}
+%     \item Que los bordes no sean una características significativa a la hora de detectar
+%     el objeto. 
+
+%     \item Una implementación errónea del algoritmo a partir de la descripción. 
+%     \item Una representación errónea de los datos.
+% \end{itemize}
+
+The results received from those transformations applied to our picture weren't successful. One of problems found, was an 
+information loss, that appeared after grayscale conversion from RGB when we apply Sobel. Grayscale meshes all channels in one, ommitting 
+part of the information. 
+
+
+The solution implemmented for this issue has been 
+
+As a result of this, the sobel filter has been applied to each of the image channels separately. Subsequently, the average gradient of each
+channel and each is added to the k-means algorithm. In this way, clustering has been substantially improved. Still, it's not for making
+an accurate segmentation.
+
+At the moment, this approach has been abandoned, as long as it has not reported results of any kind. However, it could be 
+interesting to come back to its study sometime in the future. 
+
+
+\subsection{Second approach}
+
+
+
+In this case, based on certain ideas discussed in the previous approximation,
+we're trying get a different pipeline from the studied one.  The steps followed
+in this case they have been the following:
+
+\begin{itemize}
+    
+    \item Perform preprocessing, as described in \Ref{ch:preprocesamiento}.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/preprocess.png}
+        \caption{Before-After preprocessing}
+        \label{fig:pprepre}
+    \end{figure}
+
+    \item Apply a bilateral filter to remove some background noise from images.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/filtradobilat.png}
+        \caption{bilateral filter}
+        \label{fig:bilat}
+    \end{figure}
+
+    \item Apply \verb|PyrMeanShift()|, so that the image is segmented by colors.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/meanshift.png}
+        \caption{Meanshift segmentation}
+        \label{fig:menas}
+    \end{figure}
+
+    \item Apply the algorithm \textbf{Sobel()}, to each of the channels of thepreprocessed  image
+    RGB. This is done to get the gradient changes and is applied equally
+    to the X and Y axes, performing a weighted sum of both in order to obtain the
+    change in different directions.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/gradientes.png}
+        \caption{Sobel gradients splitted}
+        \label{fig:Sobel}
+    \end{figure}
+
+    \item Obtain, from the gradients, edges in the images applying the
+    algorithm \verb|Canny()|.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/bordes.png}
+        \caption{Edges with Canny}
+        \label{fig:Canny}
+    \end{figure}
+
+
+    \item We use morphological filters to erode and dilate, trying to eliminate,
+    circular elements that may disturb and then we amplify rectangular elements.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/bordes_erode.png}
+        \caption{Edges after morphological transformations}
+        \label{fig:erodes}
+    \end{figure}
+
+
+
+    \item Having the edges filtered, the Hough transform is used to find lines in
+    inside the image.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.3]{images_doc/lineas_separada.png}
+        \caption{Lines from Hough transform}
+        \label{fig:jiug}
+    \end{figure}
+    
+    \item From the 3 line vectors we have, we create a new one where we will join
+    \textbf{all lines in the image}.
+    
 \end{itemize}
 
-
--Tras la comprobación de las distintas transformaciones aplicadas a la imagen, se observa que la conversión de escala rgb a escala 
-de grises provoca una gran perdida de información, afectando esto al uso del algoritmo Sobel, pues se pierde información importante del cambio de 
-gradiente en ciertos canales de color de la imagen.
-
-A raíz de esto, se ha aplicado el filtro sobel a cada uno de los canales de la imagen por separado. Posteriormente, se calcula el gradiente medio de cada
-canal y se añade cada uno al algoritmo k-means. De esta forma se ha conseguido mejorar sustancialmente la clusterización. Aún así, no es suficiente como para que 
-haya separado la tuberia en la imagen de referencia. 
-
-Lo proximo a tratar será la detección de lineas en cada una de las imagenes de gradiente, para ver si estas facilitan el proceso de segmentado.
-
-\subsection{Segunda aproximación}
-
-En este caso, tomando como base ciertas ideas comentadas en la anterior aproximación, 
-se trata de conseguir la detección de forma distinta al paper estudiado. Los pasos seguidos 
-en este caso han sido los siguientes: 
-
-\begin{itemize}
-    
-    \item Realizar el preprocesamiento, tal y como se describe en \Ref{ch:preprocesamiento}.
-    
-    \item Aplicar un filtro bilateral para eliminar cierto ruido del fondo de las imágenes.
-    
-    \item Aplicar el algoritmo \verb|PyrMeanShift()|, para que la imagen quede segmentada por colores.
-    
-    \item Aplicar el  algoritmo \textbf{Sobel()}, a cada uno de los canales de la imagen 
-    RGB preprocesada. Esto se hace para obtener los cambios de gradiente y se aplica por igual 
-    a los ejes X e Y, realizando una suma ponderada de ambos con el fin de obtener el 
-    cambio en distintas direcciones. 
-
-    \item Obtener, a partir de los gradientes, bordes en las imágenes aplicando el 
-    algoritmo \verb|Canny()|.
-
-    \item Utilizamos filtros morfológicos para erosionar y dilatar, tratando de eliminar,
-    elementos circulares que puedan molestar y amplificando los elementos rectangulares.
-
-    \item Teniendo los bordes filtrados, se utiliza la transformada de Hough para encontrar líneas en 
-    dentro de la imágen.
-
-    \item A partir de los 3 vectores de líneas que tenemos, creamos uno nuevo donde juntaremos
-    \textbf{todas la líneas de la imagen}. 
-    
-\end{itemize}
-
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.3]{sobel_canny_houghlines.png}
+%     \caption{Lines obtained for each channel in one of the images studied}
+%     \label{fig:sobelcanny}
+% \end{figure}
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.3]{sobel_canny_houghlines.png}
-    \caption{Líneas obtenidas para cada canal en una de las imágenes estudiadas}
-    \label{fig:sobelcanny}
+    \includegraphics[scale=0.3]{images_doc/all_lines.png}
+    \caption{Lines from Hough transform}
+    \label{fig:jiiug}
 \end{figure}
+\section{Line filtering}
 
-\section{Filtrado de líneas}
 
-A partir de las líneas extraidas, se busca eliminar líneas que no sean correspondientes con las pertenencientes a la tubería. Para ello, se analizará 
-tantto el grado de paralelismo como la distancia entre estas. 
+From the extracted lines, it seeks to dete lines that do not correspond to those belonging to the real pipe. For this, it will be analyzed
+both the degree of parallelism and the distance between them.
 
-La idea es analizar en el vector de líneas cada par de estas de la siguiente forma: 
+The idea is to analyze in the vector of lines each pair of these in the following way:
+
 
 \begin{itemize}
-    \item Se calcula la pendiente y el ángulo de cada una de estas respecto a la frontal
-    \item Se comparan los ángulos y, si se encuentran por debajo de cierto umbral, se considerarán paralelas las líneas
-    \item Se mide las distancias en X e Y de los puntos iniciales de cada línea, y nos quedamos con las que se encuentren por debajo 
-    de un umbral de distancia 
-    \item Las líneas que cumplan todas las condiciones se guardarán en un vector de líneas paralelas
+
+    \item The slope and the angle of each of these with respect to the front are calculated
+    \item The angles are compared and, if they are below a certain threshold, the lines will be considered parallel
+    \item The distances in X and Y of the initial points of each line are compared, and we are left with those that are below
+    a threshold away
+    \item Lines that meet all conditions will be saved in a vector of parallel lines
 \end{itemize}
 
 
+After filtering the lines, these are highlighted on the original image, applying certain morphological filters to improve their shape, and we finally obtain the
+image with the mask applied on the structure.
 
+\section{Subsection}
+
+
+
+\subsection{Used Dataset}
+
+Before showing the results, the images and video used to study the operation of the algorithm will be shown:
+
+\begin{figure}[H]
+    \includegraphics[width=.24\textwidth]{images_doc/img1.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img2.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img3.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img4.png}
+    \\[\smallskipamount]
+    \includegraphics[width=.24\textwidth]{images_doc/img5.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img6.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img7.png}\hfill
+    \includegraphics[width=.24\textwidth]{images_doc/img8.png}
+   
+    \caption{Some images}\label{fig:foobar}
+\end{figure}
+
+El video utlizado ha sido el siguiente \href{https://youtu.be/L0Ev5R3fBEc}{https://youtu.be/L0Ev5R3fBEc}
+
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img1_results.png}
+    \caption{res1}\label{fig:im1r}
+\end{figure}
+
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img2_results.png}
+    \caption{res1}\label{fig:im2r}
+\end{figure}
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img3_results.png}
+    \caption{res1}\label{fig:im3r}
+\end{figure}
+
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img4_results.png}
+    \caption{res1}\label{fig:im4r}
+\end{figure}
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img5_results.png}
+    \caption{res1}\label{fig:im5r}
+\end{figure}
+
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img6_results.png}
+    \caption{res1}\label{fig:im6r}
+\end{figure}
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img7_results.png}
+    \caption{res1}\label{fig:im7r}
+\end{figure}
+
+\newpage
+\begin{figure}[H]
+    \includegraphics[scale=0.22]{images_doc/img8_results.png}
+    \caption{res1}\label{fig:im8r}
+\end{figure}
+
+\subsection{Possible improvements}
+
+
+\begin{itemize}
+
+    \item Tune or delete some esteps in order to increasing computing velocity. Analyze each algorithm time-cost vs its
+    ultility inside our pipeline. 
+    
+    \item Make line detection more sophisticated in order to avoid information losses or fake lines. Study new algorithms or 
+    methrics for the used ones. 
+    
+    \item Implement as a ROS node and make performance tests with more images.
+
+\end{itemize}
 
 
 

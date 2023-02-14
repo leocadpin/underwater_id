@@ -92,8 +92,8 @@ rows, columns, channel  = result_prep.shape
 features = np.zeros(shape=(rows,columns, 6))
 
 
-img_rgb = cv.bilateralFilter(result_prep, 15, 90, 90)
-img_rgb = cv.pyrMeanShiftFiltering(img_rgb, 20, 20)
+img_bilat = cv.bilateralFilter(result_prep, 15, 90, 90)
+img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, 20, 20)
 
 # img_rgb = result_prep
 # img_hsv = cv.cvtColor(img_rgb, cv.COLOR_RGB2HSV)
@@ -159,7 +159,7 @@ def splitted_sobels(img_rgb):
     # imshow('b_img_channel', b_abs_grad)
     # # print(np.shape(features))
     return r_abs_grad, g_abs_grad, b_abs_grad
-r_abs_grad, g_abs_grad, b_abs_grad = splitted_sobels(img_rgb)
+r_abs_grad, g_abs_grad, b_abs_grad = splitted_sobels(img_meanshift)
 
 
 def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
@@ -196,8 +196,9 @@ r_lines, g_lines, b_lines = get_rgbchannel_lines(r_edges_erode,
 printed_lines_img = img.copy()
 def print_lines_and_get_all_lines(r_lines, g_lines, b_lines, printed_lines_img):
     # Dibujamos las líneas resultantes sobre una copia de la imagen original
-    # dst = img.copy()
-    # dst2 = img.copy()
+    rp = printed_lines_img.copy()
+    gp = printed_lines_img.copy()
+    bp = printed_lines_img.copy()
     # dst3 = img.copy()
     # print('que pasa')
     rl = False
@@ -208,19 +209,23 @@ def print_lines_and_get_all_lines(r_lines, g_lines, b_lines, printed_lines_img):
         for i in range(0, len(r_lines)):
             
             l = r_lines[i][0]
+            
             cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+            cv.line(rp, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
     if g_lines is not None:
         gl = True
         for i in range(0, len(g_lines)):
             
             l = g_lines[i][0]
             cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+            cv.line(gp, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
     if b_lines is not None:
         bl = True
         # all_lines = b_lines
         for i in range(0, len(b_lines)):
             l = b_lines[i][0]
             cv.line(printed_lines_img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+            cv.line(bp, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
 
     if rl and gl and bl:
         all_lines = np.concatenate((r_lines, g_lines,b_lines), axis=0)
@@ -236,8 +241,8 @@ def print_lines_and_get_all_lines(r_lines, g_lines, b_lines, printed_lines_img):
         all_lines = g_lines
     elif bl:        
         all_lines = b_lines
-    return all_lines, printed_lines_img    
-all_lines, printed_lines_img = print_lines_and_get_all_lines(r_lines, g_lines, b_lines,printed_lines_img)
+    return all_lines, printed_lines_img, rp, gp, bp    
+all_lines, printed_lines_img, rp, gp, bp = print_lines_and_get_all_lines(r_lines, g_lines, b_lines,printed_lines_img)
 
 # all_lines.append(g_lines)
 
@@ -369,22 +374,22 @@ def findparallel(all_lines, columns):
     return parallel_lines
 # def find_parallel_lines(lines):
 
-    lines_ = lines[:, 0, :]
-    angle = lines_[:, 1]
+    # lines_ = lines[:, 0, :]
+    # angle = lines_[:, 1]
 
-    # Perform hierarchical clustering
+    # # Perform hierarchical clustering
 
-    angle_ = angle[..., np.newaxis]
-    y = pdist(angle_)
-    Z = ward(y)
-    cluster = fcluster(Z, 0.5, criterion='distance')
+    # angle_ = angle[..., np.newaxis]
+    # y = pdist(angle_)
+    # Z = ward(y)
+    # cluster = fcluster(Z, 0.5, criterion='distance')
 
-    parallel_lines = []
-    for i in range(cluster.min(), cluster.max() + 1):
-        temp = lines[np.where(cluster == i)]
-        parallel_lines.append(temp.copy())
+    # parallel_lines = []
+    # for i in range(cluster.min(), cluster.max() + 1):
+    #     temp = lines[np.where(cluster == i)]
+    #     parallel_lines.append(temp.copy())
 
-    return parallel_lines
+    # return parallel_lines
 
 printed_lines_img_2 = img.copy()
 # parallel_lines = find_parallel_lines(all_lines)
@@ -423,33 +428,56 @@ final_mask = cv.morphologyEx(final_mask, cv.MORPH_CLOSE, element2)
 img_final = img.copy()
 img_final[final_mask==255] = (0, 0, 255)
 ######------- IMSHOWS--------- #######
-     
+window_const = cv.WINDOW_AUTOSIZE
+# cv.namedWindow('resultado preprocesamiento', window_const)     
 # imshow('resultado preprocesamiento', result_prep)
+cv.namedWindow('entrada', window_const) 
 imshow('entrada', img)
-# imshow('post-filtrado bilateral y meanshift', img_rgb)  
-# imshow('grad con valor absoluto', abs_grad)
-# # imshow('grad con valor de raiz', sqr_grad) 
-# imshow('img_gray', img_gray)
+# cv.namedWindow('post-filtrado bilateral', window_const) 
+# imshow('post-filtrado bilateral', img_bilat)  
+# cv.namedWindow('post meanshift', window_const) 
+# imshow('post meanshift', img_meanshift)  
+# # imshow('grad con valor absoluto', abs_grad)
+# # # imshow('grad con valor de raiz', sqr_grad) 
+# # imshow('img_gray', img_gray)
  
-# # imshow('res2', res2) 
-# # imshow('resultado preprocesamiento CLAHE', result2)
-
+# # # imshow('res2', res2) 
+# # # imshow('resultado preprocesamiento CLAHE', result2)
+# cv.namedWindow('gradientes de red channel', window_const) 
 # imshow('gradientes de red channel', r_abs_grad)
+# cv.namedWindow('gradientes de green channel', window_const) 
 # imshow('gradientes de green channel', g_abs_grad)
+# cv.namedWindow('gradientes de blue channel', window_const) 
 # imshow('gradientes de blue channel', b_abs_grad)
+# cv.namedWindow('bordes_erode r', window_const) 
 # imshow('bordes_erode r', r_edges_erode)
+# cv.namedWindow('bordes_erode g', window_const) 
 # imshow('bordes_erode g', g_edges_erode)
+# cv.namedWindow('bordes_erode b', window_const) 
 # imshow('bordes_erode b', b_edges_erode)
+# cv.namedWindow('lineas R', window_const) 
+# imshow('lineas R', rp)
+# cv.namedWindow('lineas R', window_const) 
+# imshow('lineas G', gp)
+# cv.namedWindow('lineas R', window_const) 
+# imshow('lineas B', bp)
+# cv.namedWindow('bordes r', window_const) 
 # imshow('bordes r', r_edges)
+# cv.namedWindow('bordes g', window_const) 
 # imshow('bordes g', g_edges)
+# cv.namedWindow('bordes b', window_const) 
 # imshow('bordes b', b_edges)
-imshow('Lineas r', printed_lines_img)
-imshow('Filtro paralelas', printed_lines_img_2)
+# # imshow('Lineas r', printed_lines_img)
+# cv.namedWindow('Filtro paralelas', window_const) 
+# imshow('Filtro paralelas', printed_lines_img)
+
 # imshow('Imagen segmentada', segmented_img)
 # imshow('Lineas g', dst2)
 # imshow('Lineas b', dst3)
 # imshow('Lineas_erode', edges_erode)
+cv.namedWindow('Resultado final', window_const) 
 imshow('Resultado final', img_final)
+
 
 
 cv.waitKey(0)
