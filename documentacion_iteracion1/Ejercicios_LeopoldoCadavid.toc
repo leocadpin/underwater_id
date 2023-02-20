@@ -8,4 +8,7 @@
 \contentsline {section}{\numberline {5}Subsection}{7}{section.5}%
 \contentsline {subsection}{\numberline {5.1}Used Dataset}{7}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Possible improvements}{14}{subsection.5.2}%
-\contentsline {section}{\numberline {6}Referencias}{14}{section.6}%
+\contentsline {section}{\numberline {6}Performed test}{14}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Change PyrMeanShift parameters}{14}{subsection.6.1}%
+\contentsline {section}{\numberline {7}findparallel2()}{15}{section.7}%
+\contentsline {section}{\numberline {8}Referencias}{15}{section.8}%

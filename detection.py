@@ -16,12 +16,16 @@ from scipy.cluster.hierarchy import ward, fcluster
 
 
 # Read the image
+# Read the image
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "nombre de la imagen")
+ap.add_argument("-n", "--n_image", required=True, help= "Número de imagen")
 args = vars(ap.parse_args())
-path = os.path.join('images', args['image'])
+path = os.path.join('images', 'img{}.png'.format(args['image']))
+n = args['n_image']
+save_path = os.path.join('results', '{}.png'.format(n))
+# save_path2 = os.path.join('test', 'bilatTest_grads_{}.png'.format(n))
 img = cv.imread(path)
-
 # print('Original Dimensions : ',img.shape)
  
 # scale_percent = 40 # percent of original size
@@ -427,12 +431,15 @@ final_mask = cv.dilate(final_mask, element)
 final_mask = cv.morphologyEx(final_mask, cv.MORPH_CLOSE, element2)
 img_final = img.copy()
 img_final[final_mask==255] = (0, 0, 255)
+
+cv.imwrite(save_path, img=final_mask)
+
 ######------- IMSHOWS--------- #######
-window_const = cv.WINDOW_AUTOSIZE
+# window_const = cv.WINDOW_AUTOSIZE
 # cv.namedWindow('resultado preprocesamiento', window_const)     
 # imshow('resultado preprocesamiento', result_prep)
-cv.namedWindow('entrada', window_const) 
-imshow('entrada', img)
+# cv.namedWindow('entrada', window_const) 
+# imshow('entrada', img)
 # cv.namedWindow('post-filtrado bilateral', window_const) 
 # imshow('post-filtrado bilateral', img_bilat)  
 # cv.namedWindow('post meanshift', window_const) 
@@ -475,13 +482,13 @@ imshow('entrada', img)
 # imshow('Lineas g', dst2)
 # imshow('Lineas b', dst3)
 # imshow('Lineas_erode', edges_erode)
-cv.namedWindow('Resultado final', window_const) 
-imshow('Resultado final', img_final)
+# cv.namedWindow('Resultado final', window_const) 
+# imshow('Resultado final', img_final)
 
 
 
-cv.waitKey(0)
-# # print(np.shape(l))
-cv.destroyAllWindows()
+# cv.waitKey(0)
+# # # print(np.shape(l))
+# cv.destroyAllWindows()
 
 

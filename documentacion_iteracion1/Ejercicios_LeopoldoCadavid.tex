@@ -133,7 +133,7 @@ At the moment, this approach has been abandoned, as long as it has not reported 
 interesting to come back to its study sometime in the future. 
 
 
-\subsection{Second approach}
+\subsection{Second approach}\label{ch:second_approach}
 
 
 
@@ -338,6 +338,48 @@ El video utlizado ha sido el siguiente \href{https://youtu.be/L0Ev5R3fBEc}{https
 \end{itemize}
 
 
+\section{Performed test}
+
+\subsection{Change PyrMeanShift parameters}
+
+As was described in section \ref{ch:second_approach}, \verb|PyrMeanShift()| algorithm
+is used for decreasing noise after preprocessing our image. Specifically, its
+aim is to do colout segmentation based on 2 types of neighborhoodness: by colour
+and by space. 
+
+Testing this function, the parameters that have been tuned are the following 
+ones: 
+
+\begin{itemize}
+    
+    \item  Spacial neighborhood radius was increased. This would help the algorithm
+    find more same-colour pixels in a bigger range. 
+    
+    \item Colour neighborhood radius was decreased. Because of this, less pixels 
+    will be considered as \textit{same-coloured}. This produces a smaller segmentations.
+
+    \item Max level of segementation has been elevated, meaning that we will get 
+    less contours as segmentation has been bigger.
+
+\end{itemize}
+
+
+This test have shown that, scalating coulour neighborhood can reduce noise significatively 
+but, as a takeoff, it can erase part of our structure, destying performance.
+
+
+\section{findparallel2()}
+
+One of the actualizatons implemented has been a new algorithm for parallel lines. 
+First algorithm worked well when recognising parallelism between any kind of lines, 
+desafortunatedly, it was a problem when many noise lines appear, because it turns out in 
+many parallel non-significative lines.
+
+Because of this, another criteria was tried. I could notice that, in most of the cases, 
+the biggest line founded was always on our pipe so, instead of studying parallelism between all
+pairs of lines, you could only compare lines with the bigger one , this wouls help eliminating problems
+with noisy lines. The biggest issue with this new algorithm is that it relays on the assumption that the 
+biggest line will be alway on the path.
 
 \section{Referencias}
 
