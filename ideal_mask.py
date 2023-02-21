@@ -21,8 +21,8 @@ ap.add_argument("-n", "--n_image", required=True, help= "Número de imagen")
 
 args = vars(ap.parse_args())
 n = args['n_image']
-path = os.path.join('results', 'img{}.png'.format(n))
-save_path = os.path.join('results', '{}.png'.format(n))
+path = os.path.join('images', '{}.png'.format(n))
+save_path = os.path.join('ideal_output', '{}.png'.format(n))
 
 
 img = cv.imread(path)

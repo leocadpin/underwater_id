@@ -15,6 +15,12 @@ ideal_path = os.path.join('ideal_output', '{}.png'.format(n))
 obtenida = cv.imread(obtenida_path, cv.IMREAD_GRAYSCALE)
 solucion = cv.imread(ideal_path, cv.IMREAD_GRAYSCALE)
 
+# hala=cv.addWeighted(obtenida, 0.5, solucion, 0.5, gamma=1)
+# window_const = cv.WINDOW_AUTOSIZE
+# cv.namedWindow('hala', window_const)  
+# cv.imshow('hala',hala)
+# cv.waitKey(0)
+# cv.destroyAllWindows()
 if (obtenida is None) or (solucion is None):
         print ('Error en alguna de las imagenes')
         quit()

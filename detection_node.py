@@ -51,8 +51,11 @@ class Nodo(object):
         
 
         # TODO Saber cual es el topic que publica la imagen de la camara
+        # self.sub = rospy.Subscriber(
+        #     "/uone/stereo/left/image", Image, self.callback)
         self.sub = rospy.Subscriber(
-            "/uone/stereo/left/image", Image, self.callback)
+            "bslmaris/central_image_raw", Image, self.callback)
+        
         # self.sub2 = rospy.Subscriber("/camera/rgb/image_raw",Image,self.callback2)
         
         #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
@@ -62,7 +65,7 @@ class Nodo(object):
     #Leemos imagen de la camara uOne
     def callback(self, msg):
         rospy.loginfo('Image received...')
-        self.image = self.br.imgmsg_to_cv2(msg)
+        self.image = self.br.imgmsg_to_cv2(msg, 'rgb8')
 
     
     def start(self):

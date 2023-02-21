@@ -9,14 +9,14 @@ count=0
 # ln -s /home/leo/Escritorio/Uware/1_imagenes/underwater_id ~/pathABC
 
 
-for i in {1..8}
+for i in {1..11}
 do
     # cd ~/pathABC
     # echo "$PATH"
 	filename=$(basename "$i")
 	# # n=${filename%.*}
-
-	python3 detection.py -i $i -n $i
+    python3 test_detection.py -i $i -n $i
+	# python3 detection.py -i $i -n $i
 	IoU="$(python3 acierto.py -n $i)"
 
 	echo $filename = $IoU
