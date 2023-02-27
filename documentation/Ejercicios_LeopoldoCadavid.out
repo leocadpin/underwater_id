@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{section.1}{Intro}{}% 1
+\BOOKMARK [1][-]{section.2}{Preprocessing}{}% 2
+\BOOKMARK [1][-]{section.3}{Image Processing}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{First approach: K-means algorithm}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Second approach: detection based on lines}{section.3}% 5
+\BOOKMARK [1][-]{section.4}{Post Processing}{}% 6
+\BOOKMARK [2][-]{subsection.4.1}{Cluster management}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.2}{Line filtering}{section.4}% 8
+\BOOKMARK [1][-]{section.5}{Subsection}{}% 9
+\BOOKMARK [2][-]{subsection.5.1}{Used Dataset}{section.5}% 10
+\BOOKMARK [1][-]{section.6}{Performed tests}{}% 11
+\BOOKMARK [2][-]{subsection.6.1}{Methrics and testing methodology}{section.6}% 12
+\BOOKMARK [1][-]{section.7}{Results}{}% 13
+\BOOKMARK [2][-]{subsection.7.1}{K-means approach}{section.7}% 14
+\BOOKMARK [2][-]{subsection.7.2}{Lines approach}{section.7}% 15
+\BOOKMARK [2][-]{subsection.7.3}{Change PyrMeanShift parameters}{section.7}% 16
+\BOOKMARK [1][-]{section.8}{Results}{}% 17
+\BOOKMARK [1][-]{section.9}{Referencias}{}% 18

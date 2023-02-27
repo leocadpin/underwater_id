@@ -13,7 +13,7 @@ from pyparsing import RecursiveGrammarException
 from torch import sqrt_
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import ward, fcluster    
-
+import time
 
 # Read the image
 # Read the image
@@ -24,7 +24,7 @@ args = vars(ap.parse_args())
 path = os.path.join('images', 'img{}.png'.format(args['image']))
 n = args['n_image']
 save_path = os.path.join('results', '{}.png'.format(n))
-# save_path2 = os.path.join('test', 'bilatTest_grads_{}.png'.format(n))
+save_path2 = os.path.join('results', 'colour{}.png'.format(n))
 img = cv.imread(path)
 # print('Original Dimensions : ',img.shape)
  
@@ -86,7 +86,7 @@ def preprocessing(img):
 
     result_prep = cv.cvtColor(img_lab, cv.COLOR_LAB2RGB)
     return result_prep
-
+start = time.time()
 result_prep = preprocessing(img)
 
 #--------------Clusterización -----------------------------------------#
@@ -432,10 +432,11 @@ final_mask = cv.morphologyEx(final_mask, cv.MORPH_CLOSE, element2)
 img_final = img.copy()
 img_final[final_mask==255] = (0, 0, 255)
 
-cv.imwrite(save_path, img=final_mask)
-
+end = time.time()
+elapsed_time = end - start
+print('Execution time {}: '.format(n), elapsed_time, 'seconds - 100%' )
 ######------- IMSHOWS--------- #######
-# window_const = cv.WINDOW_AUTOSIZE
+window_const = cv.WINDOW_AUTOSIZE
 # cv.namedWindow('resultado preprocesamiento', window_const)     
 # imshow('resultado preprocesamiento', result_prep)
 # cv.namedWindow('entrada', window_const) 
@@ -475,8 +476,8 @@ cv.imwrite(save_path, img=final_mask)
 # cv.namedWindow('bordes b', window_const) 
 # imshow('bordes b', b_edges)
 # # imshow('Lineas r', printed_lines_img)
-# cv.namedWindow('Filtro paralelas', window_const) 
-# imshow('Filtro paralelas', printed_lines_img)
+cv.namedWindow('Filtro paralelas', window_const) 
+imshow('Filtro paralelas', printed_lines_img_2)
 
 # imshow('Imagen segmentada', segmented_img)
 # imshow('Lineas g', dst2)
@@ -485,10 +486,11 @@ cv.imwrite(save_path, img=final_mask)
 # cv.namedWindow('Resultado final', window_const) 
 # imshow('Resultado final', img_final)
 
+cv.imwrite(save_path, img=final_mask)
+cv.imwrite(save_path2, img=img_final)
 
-
-# cv.waitKey(0)
+cv.waitKey(0)
 # # # print(np.shape(l))
-# cv.destroyAllWindows()
+cv.destroyAllWindows()
 
 
