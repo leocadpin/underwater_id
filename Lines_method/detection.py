@@ -42,7 +42,7 @@ img = cv.imread(path)
 
 # img= resized
 
-def morphology_filters(edges):
+def morphology_filters(img_bin):
         # Forma del filtro
     erosion_type = cv.MORPH_RECT
     erosion_type2 = cv.MORPH_ELLIPSE
@@ -54,7 +54,7 @@ def morphology_filters(edges):
     # dst = cv.erode(dst,element2)
     # dst = cv.morphologyEx(img_meanshift, cv.MORPH_CLOSE, element2)
     # dst2 = cv.morphologyEx(dst, cv.MORPH_CLOSE, element2)
-    edges_erode = cv.dilate(edges, element4)
+    edges_erode = cv.dilate(img_bin, element4)
     edges_erode = cv.dilate(edges_erode, element4)
   
     edges_erode = cv.erode(edges_erode, element3)

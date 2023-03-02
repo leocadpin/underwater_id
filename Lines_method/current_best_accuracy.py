@@ -170,14 +170,9 @@ def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
     aperture_size = 3
     histeresys_min_thres = 150
     histeresys_max_thres = 180
-    
-    gfilters = create_gaborfilter()
-    gabor_r, _ = apply_filter(r_abs_grad, gfilters)
-    gabor_g, _ = apply_filter(g_abs_grad, gfilters)
-    gabor_b, _ = apply_filter(b_abs_grad, gfilters)
-    r_edges = cv.Canny(gabor_r, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
-    g_edges = cv.Canny(gabor_g, histeresys_min_thres, histeresys_max_thres , None, aperture_size)
-    b_edges = cv.Canny(gabor_b, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
+    r_edges = cv.Canny(r_abs_grad, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
+    g_edges = cv.Canny(g_abs_grad, histeresys_min_thres, histeresys_max_thres , None, aperture_size)
+    b_edges = cv.Canny(b_abs_grad, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
     r_edges_erode = morphology_filters(r_edges)
     g_edges_erode = morphology_filters(g_edges)
     b_edges_erode = morphology_filters(b_edges)
@@ -518,41 +513,6 @@ def line_filtering(img, all_lines, columns):
                 n=n+1
     return img    
 
-def create_gaborfilter():
-    # This function is designed to produce a set of GaborFilters 
-    # an even distribution of theta values equally distributed amongst pi rad / 180 degree
-     
-    filters = []
-    num_filters = 16
-    ksize = 50  # The local area to evaluate
-    sigma = 3.5  # Larger Values produce more edges
-    lambd = 10.0
-    gamma = 0.5
-    psi = 0  # Offset value - lower generates cleaner results
-    for theta in np.arange(0, np.pi, np.pi / num_filters):  # Theta is the orientation for edge detection
-        kern = cv.getGaborKernel((ksize, ksize), sigma, theta, lambd, gamma, psi, ktype=cv.CV_64F)
-        kern /= 1.0 * kern.sum()  # Brightness normalization
-        filters.append(kern)
-    return filters
-
-def apply_filter(img, filters):
-# This general function is designed to apply filters to our image
-     
-    # First create a numpy array the same size as our input image
-    newimage = np.zeros_like(img)
-     
-    # Starting with a blank image, we loop through the images and apply our Gabor Filter
-    # On each iteration, we take the highest value (super impose), until we have the max value across all filters
-    # The final image is returned
-    depth = -1 # remain depth same as original image
-     
-    for kern in filters:  # Loop through the kernels in our GaborFilter
-        image_filter = cv.filter2D(img, depth, kern)  #Apply filter to image
-         
-        # Using Numpy.maximum to compare our filter and cumulative image, taking the higher value (max)
-        np.maximum(newimage, image_filter, newimage)
-    return newimage, image_filter
-
 
 
 if __name__== '__main__':
@@ -582,11 +542,11 @@ if __name__== '__main__':
     bilat_end = time.time()
     
     mshift_st = time.time()
-    # img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, sp=45, sr=25, maxLevel=4)
+    img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, sp=45, sr=25, maxLevel=4)
     mshift_end = time.time()
     
     sobels_st = time.time()
-    r_abs_grad, g_abs_grad, b_abs_grad = splitted_sobels(img_bilat)
+    r_abs_grad, g_abs_grad, b_abs_grad = splitted_sobels(img_meanshift)
     sobels_end = time.time()
 
     edges_st = time.time()

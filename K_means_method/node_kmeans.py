@@ -139,16 +139,19 @@ def splitted_sobels(img_rgb):
 
 def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
     aperture_size = 3
-    histeresys_min_thres = 165
+    histeresys_min_thres = 150
     histeresys_max_thres = 180
-    r_edges = cv.Canny(r_abs_grad, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
-    g_edges = cv.Canny(g_abs_grad, histeresys_min_thres, histeresys_max_thres , None, aperture_size)
-    b_edges = cv.Canny(b_abs_grad, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
+    gfilters = create_gaborfilter()
+    gabor_r, _ = apply_filter(r_abs_grad, gfilters)
+    gabor_g, _ = apply_filter(g_abs_grad, gfilters)
+    gabor_b, _ = apply_filter(b_abs_grad, gfilters)
+    r_edges = cv.Canny(gabor_r, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
+    g_edges = cv.Canny(gabor_g, histeresys_min_thres, histeresys_max_thres , None, aperture_size)
+    b_edges = cv.Canny(gabor_b, histeresys_min_thres, histeresys_max_thres, None, aperture_size)
     r_edges_erode = morphology_filters(r_edges)
     g_edges_erode = morphology_filters(g_edges)
     b_edges_erode = morphology_filters(b_edges)
     return r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges
-
 def get_rgbchannel_lines(r_edges_erode, g_edges_erode, b_edges_erode, columns):
     
     min_long = int(columns*0.35)
@@ -168,7 +171,31 @@ def get_rgbchannel_lines2(r_edges_erode, g_edges_erode, b_edges_erode, columns):
     b_lines = cv.HoughLinesP(b_edges_erode, 1, np.pi/180, 70, 40, min_long, min_gap)
                     
     return r_lines, g_lines, b_lines
+def filter_masks_by_area(masks, area_img, min_area_percent, max_area_percent):
+    """
+    Filter binary masks by area in percentage terms.
 
+    Args:
+        masks (list): List of binary masks.
+        area_img (int): Total number of pixels in the image.
+        min_area_percent (float): Minimum percentage of area a mask must have to be kept.
+        max_area_percent (float): Maximum percentage of area a mask can have to be kept.
+
+    Returns:
+        filtered_masks (list): List of binary masks that meet the area criteria.
+    """
+    filtered_masks = []
+    i=0
+    for mask in masks:
+        
+        area = np.sum(mask == 255)
+
+        area_percent = area / area_img * 100.0
+        print("area de la máscara ",i,": ", area_percent)
+        if min_area_percent <= area_percent <= max_area_percent:
+            filtered_masks.append(mask)
+        i=i+1 
+    return filtered_masks
 
 def print_lines_and_get_all_lines(r_lines, g_lines, b_lines, printed_lines_img):
     # Dibujamos las líneas resultantes sobre una copia de la imagen original
@@ -356,10 +383,6 @@ def findparallel2(all_lines, columns):
         parallel_lines = None    
     return parallel_lines, biggest_line_index
 
-def largest_mask(masks):
-    areas = [np.sum(mask) for mask in masks]
-    return np.argmax(areas)
-
 def find_biggest_line(all_lines):
     long = 0
     max_long = 0
@@ -425,9 +448,77 @@ def line_filtering(img, all_lines, columns):
                     cv.line(img, (l[0], l[1]), (l[2], l[3]), (0,0,255), 2, cv.LINE_AA)
             n=n+1
     return img    
+def smallest_mask(masks):
+    areas = [np.sum(mask) for mask in masks]
+    return np.argmin(areas)
+def morphology_filters2(img_bin):
+        # Forma del filtro
+    erosion_type = cv.MORPH_RECT
+    erosion_type2 = cv.MORPH_ELLIPSE
+    # El último parámetro es el tamaño del filtro, en este caso 5x5
+    # element = cv.getStructuringElement(erosion_type, (4,4)) 
+    element2 = cv.getStructuringElement(erosion_type2, (1,1)) 
+    element3 = cv.getStructuringElement(erosion_type2, (5,5))
+    element4 = cv.getStructuringElement(erosion_type, (5,5)) 
+    # dst = cv.erode(dst,element2)
+    # dst = cv.morphologyEx(img_meanshift, cv.MORPH_CLOSE, element2)
+    # dst2 = cv.morphologyEx(dst, cv.MORPH_CLOSE, element2)
+    edges_erode = cv.erode(img_bin.astype(np.uint8), element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    edges_erode = cv.erode(edges_erode, element2)
+    # edges_erode = cv.dilate(edges_erode, element4)
+    
+    
+    # edges_erode = cv.dilate(edges_erode, element4)
+    # edges_erode = cv.erode(edges_erode, element3)
+    
+   
+    return edges_erode
+
+def largest_mask(masks):
+    areas = [np.sum(mask) for mask in masks]
+    return np.argmax(areas)
+
+def create_gaborfilter():
+    # This function is designed to produce a set of GaborFilters 
+    # an even distribution of theta values equally distributed amongst pi rad / 180 degree
+     
+    filters = []
+    num_filters = 16
+    ksize = 50  # The local area to evaluate
+    sigma = 2.2  # Larger Values produce more edges
+    lambd = 10.0
+    gamma = 0.5
+    psi = 0  # Offset value - lower generates cleaner results
+    for theta in np.arange(0, np.pi, np.pi / num_filters):  # Theta is the orientation for edge detection
+        kern = cv.getGaborKernel((ksize, ksize), sigma, theta, lambd, gamma, psi, ktype=cv.CV_64F)
+        kern /= 1.0 * kern.sum()  # Brightness normalization
+        filters.append(kern)
+    return filters
+
+def apply_filter(img, filters):
+# This general function is designed to apply filters to our image
+     
+    # First create a numpy array the same size as our input image
+    newimage = np.zeros_like(img)
+     
+    # Starting with a blank image, we loop through the images and apply our Gabor Filter
+    # On each iteration, we take the highest value (super impose), until we have the max value across all filters
+    # The final image is returned
+    depth = -1 # remain depth same as original image
+     
+    for kern in filters:  # Loop through the kernels in our GaborFilter
+        image_filter = cv.filter2D(img, depth, kern)  #Apply filter to image
+         
+        # Using Numpy.maximum to compare our filter and cumulative image, taking the higher value (max)
+        np.maximum(newimage, image_filter, newimage)
+    return newimage, image_filter
 
 
-def hsv_gradient_segmentation(img, num_clusters=3):
+def hsv_gradient_segmentation(img, num_clusters=5):
     # Convert image to grayscale
     # gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -445,7 +536,8 @@ def hsv_gradient_segmentation(img, num_clusters=3):
 
     # Reshape the image to a 2D array of pixels
     pixels = hsv_img.reshape((-1, 3))
-
+    h,w, _ = hsv_img.shape
+    area_img = h*w
     # Compute feature vector using gradient and HSV values
     feature_vector = np.concatenate((pixels, r_edges_erode.flatten().reshape((-1, 1))), axis=1)
     feature_vector = np.concatenate((feature_vector, g_edges_erode.flatten().reshape((-1, 1))), axis=1)
@@ -453,7 +545,7 @@ def hsv_gradient_segmentation(img, num_clusters=3):
 
     # Convert feature vector values to float32 for clustering
     feature_vector = np.float32(feature_vector)
-    print(feature_vector.shape)
+    # print(feature_vector.shape)
     # Define criteria and apply k-means clustering
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret, labels, centers = cv.kmeans(feature_vector, num_clusters, None, criteria, 10, cv.KMEANS_PP_CENTERS)
@@ -467,7 +559,8 @@ def hsv_gradient_segmentation(img, num_clusters=3):
         mask = np.zeros_like(labels)
         mask[labels == i] = 255
         masks.append(mask)
-
+    filtered_masks = filter_masks_by_area(masks,area_img, 4, 25)
+    # print(len(filtered_masks))
     # # Combine masks to create final segmentation mask
     segmentation_mask = np.zeros_like(labels)
     # segmentation_mask2 = np.zeros_like(labels)
@@ -475,32 +568,55 @@ def hsv_gradient_segmentation(img, num_clusters=3):
     # for mask in masks:
     #     segmentation_mask = cv.bitwise_or(segmentation_mask, mask)
     # print(masks)
-    biggest_area_index = largest_mask(masks)
+    # biggest_area_index = largest_mask(masks)
     # print(biggest_area_index)
-    for i in range(num_clusters):
-        if i== biggest_area_index:
-            continue
-        else:
-            segmentation_mask = cv.bitwise_or(segmentation_mask, masks[i])
-            
-    segmentation_masks = [None] * num_clusters      
-    for i in range(num_clusters):
+    # smallest_area_index = smallest_mask(masks)
+    # print(smallest_area_index)
+    # second_smallest_index = second_smallest_mask(masks)
+    # print(second_smallest_index)
+    # candidates = []  
+    # for i in range(num_clusters):
+    #     if i== biggest_area_index:
+    #         continue
+    #     if i== smallest_area_index:
+    #         continue
+    #     if i== second_smallest_index:
+    #         continue
+    #     # else:
+    #     #     if not c1_check: 
+    #     #         c1 = masks[i]
+    #     #         c1 = morphology_filters(c1)
+    #     #         c1_check = True
+    #     #         continue
+    #     #     c2 = masks[i]    
+    #     #     c1 = morphology_filters(c2)
+    #     #     segmentation_mask = cv.bitwise_and(c1, c2)
+    #     # segmentation_mask = cv.bitwise_or(segmentation_mask, masks[i])
+    #     candidates.append(masks[i])
+    for i in range(len(filtered_masks)):
+        segmentation_mask = cv.bitwise_or(segmentation_mask, filtered_masks[i])
+    # print(candidates)
+    # segmentation_mask = get_best_rectangular_contour(candidates[0],candidates[1])
+    # segmentation_mask = compare_masks_rectangularity(candidates[0], candidates[1])
+    
+    # segmentation_masks = [None] * num_clusters      
+    # for i in range(num_clusters):
         
-        # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])        
-        segmentation_masks[i] = np.zeros_like(labels)
-        # segmentation_mask2 = np.zeros_like(labels)
-        # segmentation_mask3 = np.zeros_like(labels)
-        # segmentation_mask4 = np.zeros_like(labels)
-        segmentation_masks[i] = cv.bitwise_or(segmentation_masks[i], masks[i])
-        # segmentation_mask2 = cv.bitwise_or(segmentation_mask2, masks[1])
-        # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])
-        # segmentation_mask4 = cv.bitwise_or(segmentation_mask4, masks[3])
-        # Convert mask to uint8 data type
-        segmentation_masks[i] = segmentation_masks[i].astype(np.uint8)
-        # segmentation_mask1 = segmentation_mask1.astype(np.uint8)
-        # segmentation_mask2 = segmentation_mask2.astype(np.uint8)
-        # segmentation_mask3 = segmentation_mask3.astype(np.uint8)
-     
+    #     # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])        
+    #     segmentation_masks[i] = np.zeros_like(labels)
+    #     # segmentation_mask2 = np.zeros_like(labels)
+    #     # segmentation_mask3 = np.zeros_like(labels)
+    #     # segmentation_mask4 = np.zeros_like(labels)
+    #     segmentation_masks[i] = cv.bitwise_or(segmentation_masks[i], masks[i])
+    #     # segmentation_mask2 = cv.bitwise_or(segmentation_mask2, masks[1])
+    #     # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])
+    #     # segmentation_mask4 = cv.bitwise_or(segmentation_mask4, masks[3])
+    #     # Convert mask to uint8 data type
+    #     segmentation_masks[i] = segmentation_masks[i].astype(np.uint8)
+    #     # segmentation_mask1 = segmentation_mask1.astype(np.uint8)
+    #     # segmentation_mask2 = segmentation_mask2.astype(np.uint8)
+    #     # segmentation_mask3 = segmentation_mask3.astype(np.uint8)
+    #     cv.imshow('cluster {}'.format(i), segmentation_masks[i])    
     
     
     
@@ -509,15 +625,18 @@ def hsv_gradient_segmentation(img, num_clusters=3):
     
     
     
-      
+    
+    # cv.imshow('cluster4', segmentation_mask4)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()    
     
     # Apply mask to original image
     # segmented_img = cv.bitwise_and(img, img, mask=segmentation_mask1)
-    img[segmentation_mask==255] = (0, 0, 255)
+    # img[segmentation_mask==255] = (0, 0, 255)
     # Convert segmented image back to BGR color space
     # segmented_img = cv.cvtColor(segmented_img, cv.COLOR_HSV2BGR)
 
-    return img, segmentation_mask, segmentation_masks
+    return segmentation_mask
 
 class Nodo(object):
     
@@ -588,11 +707,11 @@ class Nodo(object):
                 # img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, sp=45, sr=25, maxLevel=2)
 
                 # img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, sp=45, sr=25, maxLevel=4)
-                img_res, seg, masks = hsv_gradient_segmentation(img_bilat)
+                final_mask = hsv_gradient_segmentation(img_bilat)
                 # clusters_res = cluster_classification(masks)
                 # print(len(clusters_res))
                 img_final = img.copy()
-                img_final = img[seg==255] = (0, 0, 255)
+                img_final[final_mask==255] = (0, 0, 255)
                 self.pub.publish(self.br.cv2_to_imgmsg(img_final))   
         #     else:
         #         break    

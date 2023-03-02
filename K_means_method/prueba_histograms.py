@@ -3,7 +3,7 @@ import os
 import argparse
 import numpy as np
 from cv2 import split
-import time as tm
+
 # Read the image
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "nombre de la imagen")
@@ -55,6 +55,26 @@ def preprocessing(img):
 def splitted_sobels(img_rgb):
     # Conversion a escala de grises 
     r_img , g_img, b_img = split(img_rgb)
+
+
+    # imshow('r_channel', r_img)
+    # imshow('g_channel', g_img)
+    # imshow('b_channel', b_img)
+
+    # r_img = img_rgb.copy()
+    # r_img[:,:,0] =0
+
+    # g_img = img_rgb.copy()
+    # # g_img[:,:, 1] =0
+    # g_img[:,:, 1] =0
+
+    # b_img = img_rgb.copy()
+    # b_img[:,:,2] =0
+
+
+    # imshow('r_img_channel', r_img)
+    # imshow('g_img_channel', g_img)
+    # imshow('b_img_channel', b_img)
 
 
     # #Gradientes
@@ -147,18 +167,6 @@ def multi_edges(r_abs_grad, g_abs_grad, b_abs_grad):
     r_edges_erode = morphology_filters(r_edges)
     g_edges_erode = morphology_filters(g_edges)
     b_edges_erode = morphology_filters(b_edges)
-    
-    # cv.imshow('Gabor_r', gabor_r)
-    # cv.imshow('Gabor_g', gabor_g)
-    # cv.imshow('Gabor_b', gabor_b)
-    # cv.imshow('Canny r', r_edges)
-    # cv.imshow('Canny g', g_edges)
-    # cv.imshow('Canny b', b_edges)
-    # cv.imshow('cleaner Canny r', r_edges_erode)
-    # cv.imshow('cleaner g', g_edges_erode)
-    # cv.imshow('cleaner b', b_edges_erode)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
     return r_edges_erode, g_edges_erode, b_edges_erode, r_edges, g_edges, b_edges
 def create_gaborfilter():
     # This function is designed to produce a set of GaborFilters 
@@ -195,13 +203,13 @@ def apply_filter(img, filters):
         np.maximum(newimage, image_filter, newimage)
     return newimage, image_filter
 
-# def largest_mask(masks):
-#     areas = [np.sum(mask) for mask in masks]
-#     return np.argmax(areas)
+def largest_mask(masks):
+    areas = [np.sum(mask) for mask in masks]
+    return np.argmax(areas)
 
-# def smallest_mask(masks):
-#     areas = [np.sum(mask) for mask in masks]
-#     return np.argmin(areas)
+def smallest_mask(masks):
+    areas = [np.sum(mask) for mask in masks]
+    return np.argmin(areas)
 
 def second_smallest_mask(masks):
     areas = [np.sum(mask) for mask in masks]
@@ -219,7 +227,48 @@ def get_largest_contour(mask):
     contour_mask = cv.drawContours(np.zeros_like(mask), [max_contour], 0, 255, -1)
     return contour_mask
 
-
+def show_circular_contours(mask1, mask2):
+    """
+    Toma dos máscaras binarias, encuentra los contornos circulares de cada una y muestra los resultados en una ventana de OpenCV.
+    """
+    # Encontrar los contornos circulares de la primera máscara
+    contours1, _ = cv.findContours(mask1.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    circles1 = []
+    for contour in contours1:
+        area = cv.contourArea(contour)
+        perimeter = cv.arcLength(contour, True)
+        circularity = 4*np.pi*(area/(perimeter**2))
+        if circularity > 0.8:
+            (x,y), radius = cv.minEnclosingCircle(contour)
+            circles1.append(((int(x),int(y)), int(radius)))
+    
+    # Encontrar los contornos circulares de la segunda máscara
+    contours2, _ = cv.findContours(mask2.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    circles2 = []
+    for contour in contours2:
+        area = cv.contourArea(contour)
+        perimeter = cv.arcLength(contour, True)
+        circularity = 4*np.pi*(area/(perimeter**2))
+        if circularity > 0.8:
+            (x,y), radius = cv.minEnclosingCircle(contour)
+            circles2.append(((int(x),int(y)), int(radius)))
+    
+    # Mostrar los resultados en una ventana de OpenCV
+    height, width = mask1.shape
+    result = np.zeros((height, 2*width, 3), dtype=np.uint8)
+    result[:, :width, 0] = mask1
+    result[:, width:, 0] = mask2
+    result[:, :width, 1] = mask1
+    result[:, width:, 1] = mask2
+    result[:, :width, 2] = mask1
+    result[:, width:, 2] = mask2
+    for circle in circles1:
+        cv.circle(result, circle[0], circle[1], (0,255,0), 2)
+    for circle in circles2:
+        cv.circle(result, (circle[0][0]+width, circle[0][1]), circle[1], (0,255,0), 2)
+    cv.imshow('Circulares', result)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 def filter_masks_by_area(masks, area_img, min_area_percent, max_area_percent):
     """
     Filter binary masks by area in percentage terms.
@@ -240,7 +289,7 @@ def filter_masks_by_area(masks, area_img, min_area_percent, max_area_percent):
         area = np.sum(mask == 255)
 
         area_percent = area / area_img * 100.0
-        # print("area de la máscara ",i,": ", area_percent)
+        print("area de la máscara ",i,": ", area_percent)
         if min_area_percent <= area_percent <= max_area_percent:
             filtered_masks.append(mask)
         i=i+1 
@@ -254,14 +303,14 @@ def count_lines(mask):
         mask_lines = mask_lines.astype(np.uint8)
         mask_lines = cv.cvtColor(mask_lines, cv.COLOR_GRAY2BGR)
         # all_lines = b_lines
-        # for i in range(0, len(lines)):
-        #     l = lines[i][0]
-        #     cv.line(mask_lines, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
+        for i in range(0, len(lines)):
+            l = lines[i][0]
+            cv.line(mask_lines, (l[0], l[1]), (l[2], l[3]), (0,0,255), 1, cv.LINE_AA)
         
-        # cv.imshow('mask lines', mask_lines)    
+        cv.imshow('mask lines', mask_lines)    
     
-        # cv.waitKey(0)
-        # cv.destroyAllWindows()    
+        cv.waitKey(0)
+        cv.destroyAllWindows()    
             
         return len(lines)
 
@@ -274,6 +323,40 @@ def filter_masks_by_lines(masks, min_lines, max_lines):
                 filtered_masks.append(mask)
                 
     return filtered_masks
+
+
+# def filter_masks_by_area(masks,area_img, min_area_percent, max_area_percent):
+#     """
+#     Filter binary masks by area in percentage terms.
+
+#     Args:
+#         masks (list): List of binary masks.
+#         min_area_percent (float): Minimum percentage of area a mask must have to be kept.
+#         max_area_percent (float): Maximum percentage of area a mask can have to be kept.
+
+#     Returns:
+#         filtered_masks (list): List of binary masks that meet the area criteria.
+#     """
+#     # areas = [np.sum(mask) for mask in masks]
+#     min_area = min_area_percent*(area_img) / 100.0  
+#     max_area = max_area_percent*(area_img) / 100.0  
+#     print("max area: ", max_area)
+#     print("min area: ", min_area) 
+#     # filtered_masks = [mask for i, mask in enumerate(masks) if min_area <= areas[i] <= max_area]
+#     filtered_masks = []
+#     i=0
+#     for mask in masks:
+        
+#         area = np.sum(mask)
+#         print("area de la máscara ",i,": ", area)
+#         if area >= min_area and area <= max_area:
+#             filtered_masks.append(mask)
+#             print("Se añade la máscara: ", i)
+#             print(filtered_masks)
+#         i=i+1    
+#     return filtered_masks
+    
+
 
 def hsv_gradient_segmentation(img, num_clusters=5):
     # Convert image to grayscale
@@ -290,33 +373,40 @@ def hsv_gradient_segmentation(img, num_clusters=5):
                                                         b_abs_grad)
     # Convert image from BGR to HSV
     hsv_img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    # lab_img = cv.cvtColor(img, cv.COLOR_BGR2LAB)
-    # hls_img = cv.cvtColor(img, cv.COLOR_BGR2HLS)
-    # xyz_img = cv.cvtColor(img, cv.COLOR_BGR2XYZ)
-    # rgb_img = img.copy()
-    # Reshape the image to a 2D array of pixels
-    h,w, _ = hsv_img.shape
-    area_img = h*w
-    pixels = hsv_img.reshape((-1, 3))
-    # pixels_lab = lab_img.reshape((-1, 3))
-    # pixels_hls = hls_img.reshape((-1, 3))
-    # pixels_rgb = rgb_img.reshape((-1, 3))
-    # pixels_xyz = xyz_img.reshape((-1, 3))
-    # Compute feature vector using gradient and HSV values
-    # feature_vector = np.concatenate((pixels, pixels_xyz), axis=1)
-    feature_vector = np.concatenate((pixels, r_edges_erode.flatten().reshape((-1, 1))), axis=1)
-    feature_vector = np.concatenate((feature_vector, g_edges_erode.flatten().reshape((-1, 1))), axis=1)
-    feature_vector = np.concatenate((feature_vector, b_edges_erode.flatten().reshape((-1, 1))), axis=1)
+    # Calculate histograms for each channel of the HSV image and normalize them
+    h_hist = cv.calcHist([hsv_img], [0], None, [16], [0, 180]) / hsv_img.size
+    s_hist = cv.calcHist([hsv_img], [1], None, [16], [0, 256]) / hsv_img.size
+    v_hist = cv.calcHist([hsv_img], [2], None, [16], [0, 256]) / hsv_img.size
+    hsv_hist = np.concatenate([h_hist.flatten(), s_hist.flatten(), v_hist.flatten()], axis=0)
 
+    # Reshape the image to a 2D array of pixels
+    h, w, _ = hsv_img.shape
+    area_img = h * w
+    pixels = hsv_img.reshape((-1, 3))
+    
+       # Compute feature vector using gradient, histogram, and HSV values
+    num_pixels = pixels.shape[0]
+    # Compute feature vector using gradient, histogram, and HSV values
+    hsv_hist = np.tile(hsv_hist, (r_edges_erode.size, 1))
+    feature_vector = np.concatenate([r_edges_erode.flatten().reshape((-1, 1))], axis=1)
+    feature_vector = np.concatenate([feature_vector, g_edges_erode.flatten().reshape((-1, 1))], axis=1)
+    feature_vector = np.concatenate([feature_vector, hsv_hist], axis=1)
+
+
+    #  # Compute feature vector using gradient, histogram, and HSV values
+    # hsv_hist = np.tile(hsv_hist, (r_edges_erode.size, 1))
+    # feature_vector = np.concatenate([r_edges_erode.flatten().reshape((-1, 1))], axis=1)
+    # feature_vector = np.concatenate([feature_vector, g_edges_erode.flatten().reshape((-1, 1))], axis=1)
+    # feature_vector = np.concatenate([feature_vector, hsv_hist], axis=1)
+
+    print(feature_vector.shape)
     # Convert feature vector values to float32 for clustering
     feature_vector = np.float32(feature_vector)
     # print(feature_vector.shape)
     # Define criteria and apply k-means clustering
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1)
-    k_mean_start = tm.time()
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret, labels, centers = cv.kmeans(feature_vector, num_clusters, None, criteria, 10, cv.KMEANS_PP_CENTERS)
-    k_mean_end = tm.time()
-    k_time = k_mean_end - k_mean_start
+
     # Reshape the labels to match the original image shape
     labels = labels.reshape(img.shape[:2])
     segmentation_mask = np.zeros_like(labels)
@@ -329,10 +419,10 @@ def hsv_gradient_segmentation(img, num_clusters=5):
         masks.append(mask)
         
     filtered_masks = filter_masks_by_area(masks,area_img, 4, 25)
-    # print(len(filtered_masks))
+    print(len(filtered_masks))
     if len(filtered_masks)>=1:
         filtered_by_lines = filter_masks_by_lines(filtered_masks, 1, 10)
-        # print(len(filtered_by_lines))
+        print(len(filtered_by_lines))
         if len(filtered_by_lines) >= 1:
             for i in range(len(filtered_by_lines)):
                 segmentation_mask = cv.bitwise_or(segmentation_mask, filtered_by_lines[i])
@@ -341,28 +431,72 @@ def hsv_gradient_segmentation(img, num_clusters=5):
                 segmentation_mask = cv.bitwise_or(segmentation_mask, filtered_masks[i])        
 
     
+    # segmentation_mask2 = np.zeros_like(labels)
+    # segmentation_mask3 = np.zeros_like(labels)
+    # for mask in masks:
+    #     segmentation_mask = cv.bitwise_or(segmentation_mask, mask)
+    # print(masks)
+    # biggest_area_index = largest_mask(masks)
+    # print(biggest_area_index)
+    # smallest_area_index = smallest_mask(masks)
+    # print(smallest_area_index)
+    # second_smallest_index = second_smallest_mask(masks)
+    # print(second_smallest_index)
+    # candidates = []  
+    # for i in range(num_clusters):
+    #     if i== biggest_area_index:
+    #         continue
+    #     if i== smallest_area_index:
+    #         continue
+    #     if i== second_smallest_index:
+    #         continue
+    #     # else:
+    #     #     if not c1_check: 
+    #     #         c1 = masks[i]
+    #     #         c1 = morphology_filters(c1)
+    #     #         c1_check = True
+    #     #         continue
+    #     #     c2 = masks[i]    
+    #     #     c1 = morphology_filters(c2)
+    #     #     segmentation_mask = cv.bitwise_and(c1, c2)
+    #     # segmentation_mask = cv.bitwise_or(segmentation_mask, masks[i])
+    #     candidates.append(masks[i])
 
-    # segmentation_masks = [None] * num_clusters      
-    # for i in range(num_clusters):           
-    #     segmentation_masks[i] = np.zeros_like(labels)         
-    #     segmentation_masks[i] = cv.bitwise_or(segmentation_masks[i], masks[i])            
-    #     segmentation_masks[i] = segmentation_masks[i].astype(np.uint8)   
-    #     cv.imshow('cluster {}'.format(i), segmentation_masks[i])    
+        
+    # print(candidates)
+    # segmentation_mask = get_best_rectangular_contour(candidates[0],candidates[1])
+    # segmentation_mask = compare_masks_rectangularity(candidates[0], candidates[1])
     
-    # hache, ese, uve = split(hsv_img)
-    # cv.imshow('hsv', hsv_img)
-    # cv.imshow('h', hache)
-    # cv.imshow('s', ese)
-    # cv.imshow('v', uve)
+    segmentation_masks = [None] * num_clusters      
+    for i in range(num_clusters):
+        
+        # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])        
+        segmentation_masks[i] = np.zeros_like(labels)
+        # segmentation_mask2 = np.zeros_like(labels)
+        # segmentation_mask3 = np.zeros_like(labels)
+        # segmentation_mask4 = np.zeros_like(labels)
+        segmentation_masks[i] = cv.bitwise_or(segmentation_masks[i], masks[i])
+        # segmentation_mask2 = cv.bitwise_or(segmentation_mask2, masks[1])
+        # segmentation_mask3 = cv.bitwise_or(segmentation_mask3, masks[2])
+        # segmentation_mask4 = cv.bitwise_or(segmentation_mask4, masks[3])
+        # Convert mask to uint8 data type
+        segmentation_masks[i] = segmentation_masks[i].astype(np.uint8)
+        # segmentation_mask1 = segmentation_mask1.astype(np.uint8)
+        # segmentation_mask2 = segmentation_mask2.astype(np.uint8)
+        # segmentation_mask3 = segmentation_mask3.astype(np.uint8)
+        cv.imshow('cluster {}'.format(i), segmentation_masks[i])    
+    
+    
+    
     # segmentation_mask4 = segmentation_mask4.astype(np.uint8)
     # segmentation_mask3 = segmentation_mask3.astype(np.uint8)
     
     
     
     
-    # # cv.imshow('cluster4', segmentation_mask4)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()    
+    # cv.imshow('cluster4', segmentation_mask4)
+    cv.waitKey(0)
+    cv.destroyAllWindows()    
     
     # Apply mask to original image
     # segmented_img = cv.bitwise_and(img, img, mask=segmentation_mask1)
@@ -370,7 +504,7 @@ def hsv_gradient_segmentation(img, num_clusters=5):
     # Convert segmented image back to BGR color space
     # segmented_img = cv.cvtColor(segmented_img, cv.COLOR_HSV2BGR)
 
-    return segmentation_mask, k_time
+    return img, segmentation_mask, segmentation_masks
 
 def white_balance(img):
     result = cv.cvtColor(img, cv.COLOR_BGR2LAB)
@@ -428,6 +562,129 @@ def morphology_filters2(img_bin):
    
     return edges_erode
  
+ 
+ 
+def cluster_classification(clusters):
+    # Iterate through each cluster and perform shape validation
+    result_clusters = []
+    
+    for cluster in clusters:
+        cluster = cluster.astype(np.uint8)
+        # Compute the contour of the binary image corresponding to the cluster
+        contour, _ = cv.findContours(cluster, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contour = contour[0]
+        
+        # Create a binary image from the contour
+        binary_image = np.zeros(cluster.shape, dtype=np.uint8)
+        cv.drawContours(binary_image, [contour], -1, 255, -1)
+        
+        # Extract parallel line segments from the binary image using the Hough transform
+        lines = cv.HoughLines(binary_image, rho=1, theta=np.pi/180, threshold=50)
+        segments = []
+        if lines is not None:
+            for line in lines:
+                rho, theta = line[0]
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                x1 = int(x0 + 1000 * (-b))
+                y1 = int(y0 + 1000 * (a))
+                x2 = int(x0 - 1000 * (-b))
+                y2 = int(y0 - 1000 * (a))
+                length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                segments.append((length, (x1, y1), (x2, y2)))
+        
+        # Build the angular histogram
+        num_bins = 36  # Number of bins in the angular histogram
+        bin_size = np.pi / (2*num_bins)  # Size of each bin
+        hist = np.zeros(num_bins)
+        for segment in segments:
+            length = segment[0]
+            x1, y1 = segment[1]
+            x2, y2 = segment[2]
+            angle = np.arctan2(y2-y1, x2-x1)
+            if angle < 0:
+                angle += np.pi
+            bin_idx = int(angle / bin_size)
+            hist[bin_idx] += length**2
+        
+        # Check if the histogram is "peaked"
+        hist_mean = np.mean(hist)
+        sigma_th = 0.5  # Acceptance threshold for histogram peakiness
+        hist_peakiness = 0.0
+        if np.max(hist) != 0:
+            hist_peakiness = 1/num_bins * np.sum(hist) / (np.max(hist) + hist_mean)
+        if hist_peakiness >= sigma_th:
+            result_clusters.append(cluster)
+    return result_clusters
+def compare_masks_rectangularity(mask1, mask2):
+    """
+    Compare two binary masks and return the one with the best rectangularity score
+    """
+    mask1 = morphology_filters2(mask1)
+    mask2 = morphology_filters2(mask2)
+    contours1, _ = cv.findContours(mask1.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contours2, _ = cv.findContours(mask2.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    best_mask = None
+    best_rectangularity = -1
+
+    for cnt in contours1:
+        x, y, w, h = cv.boundingRect(cnt)
+        if w == 0 or h == 0:
+            continue
+
+        # Calculate rectangularity measures
+        area = cv.contourArea(cnt)
+        if w > h:
+            aspect_ratio = w / h
+        else:
+            aspect_ratio = h / w
+        solidity = area / (w * h)
+
+        for cnt2 in contours2:
+            x2, y2, w2, h2 = cv.boundingRect(cnt2)
+            if w2 == 0 or h2 == 0:
+                continue
+
+            # Calculate rectangularity measures
+            area2 = cv.contourArea(cnt2)
+            if w2 > h2:
+                aspect_ratio2 = w2 / h2
+            else:
+                aspect_ratio2 = h2 / w2
+            solidity2 = area2 / (w2 * h2)
+
+            # Calculate similarity score based on rectangularity measures
+            if abs(aspect_ratio - aspect_ratio2)!=0:
+                aspect_ratio_score = 1 / abs(aspect_ratio - aspect_ratio2)
+            else:
+                aspect_ratio_score = 0
+        
+            if abs(solidity - solidity2)!=0:
+                solidity_score = 1 / abs(solidity - solidity2)
+            else:
+                solidity_score = 0
+        
+            if abs(area - area2)!=0:
+                area_score = 1 / abs(area - area2)
+            else:
+                area_score = 0
+             
+            
+
+            # Calculate overall rectangularity score
+            rectangularity = aspect_ratio_score + solidity_score + area_score
+
+            if rectangularity > best_rectangularity:
+                best_mask = mask1 if area > area2 else mask2
+                best_rectangularity = rectangularity
+
+    return best_mask
+
+
+
+
 def get_best_rectangular_contour(mask1, mask2):
     """
     Compara dos máscaras binarias y devuelve la que tiene el mejor contorno rectangular.
@@ -465,9 +722,88 @@ def get_best_rectangular_contour(mask1, mask2):
 
 
 
+def get_mask_with_fewest_circles(mask1, mask2):
+    """
+    Compara dos máscaras binarias y devuelve la que tiene el menor número de círculos.
+    
+    Args:
+        mask1 (ndarray): La primera máscara binaria.
+        mask2 (ndarray): La segunda máscara binaria.
+        
+    Returns:
+        ndarray: La máscara binaria que tiene el menor número de círculos.
+    """
+    
+    # Encuentra los contornos de cada máscara
+    contours1, _ = cv.findContours(mask1.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contours2, _ = cv.findContours(mask2.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    
+    # Encuentra el número de círculos para cada máscara
+    num_circles1 = 0
+    for contour in contours1:
+        perimeter = cv.arcLength(contour, True)
+        approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(approx) >= 15:
+            ellipse = cv.fitEllipse(approx)
+            if (ellipse[1][0] > 0) and (ellipse[1][1] > 0):
+                num_circles1 += 1
+
+    num_circles2 = 0
+    for contour in contours2:
+        perimeter = cv.arcLength(contour, True)
+        approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(approx) >= 15:
+            ellipse = cv.fitEllipse(approx)
+            if (ellipse[1][0] > 0) and (ellipse[1][1] > 0):
+                num_circles2 += 1
+    
+    # Compara el número de círculos de cada máscara y devuelve la que tiene el menor número de círculos
+    if num_circles1 < num_circles2:
+        return mask1
+    else:
+        return mask2
+
+
+def get_mask_with_most_rectangles(mask1, mask2):
+    """
+    Compara dos máscaras binarias y devuelve la que tiene el mayor número de rectángulos.
+    
+    Args:
+        mask1 (ndarray): La primera máscara binaria.
+        mask2 (ndarray): La segunda máscara binaria.
+        
+    Returns:
+        ndarray: La máscara binaria que tiene el mayor número de rectángulos.
+    """
+    
+    # Encuentra los contornos de cada máscara
+    contours1, _ = cv.findContours(mask1.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contours2, _ = cv.findContours(mask2.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    
+    # Encuentra el número de rectángulos para cada máscara
+    num_rectangles1 = 0
+    for contour in contours1:
+        perimeter = cv.arcLength(contour, True)
+        approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(approx) == 4:
+            num_rectangles1 += 1
+
+    num_rectangles2 = 0
+    for contour in contours2:
+        perimeter = cv.arcLength(contour, True)
+        approx = cv.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(approx) == 4:
+            num_rectangles2 += 1
+    
+    # Compara el número de rectángulos de cada máscara y devuelve la que tiene el mayor número de rectángulos
+    if num_rectangles1 > num_rectangles2:
+        return mask1
+    else:
+        return mask2
+
+
 if __name__== '__main__':
 
-    start = tm.time()
     img_prep = preprocessing(img)
     img_wb = white_balance(img_prep)
         #  = cv.GaussianBlur(wb,(3,3),cv.BORDER_WRAP)
@@ -480,21 +816,18 @@ if __name__== '__main__':
     img_bilat = cv.bilateralFilter(img_wb, d=9, sigmaColor=75, sigmaSpace=75)
     
     # img_meanshift = cv.pyrMeanShiftFiltering(img_bilat, sp=45, sr=25, maxLevel=4)
-    final_mask, k_means_execution_time  = hsv_gradient_segmentation(img_bilat)
+    img_res, final_mask, masks = hsv_gradient_segmentation(img_bilat)
     # clusters_res = cluster_classification(masks)
     # print(len(clusters_res))
     final_mask = morphology_filters3(final_mask)
     final_mask = get_largest_contour(final_mask)
     img_final = img.copy()
     img_final[final_mask==255] = (0, 0, 255)
-    end = tm.time()
     
-    execution_time = end - start
-    print('Tiempo de ejecución: ', execution_time)
-    print('Tiempo de ejecución K-means: ', k_means_execution_time)
+    
     cv.imwrite(save_path, img=final_mask)
     cv.imwrite(save_path2, img=img_final)
-    # cv.imshow('hala', img_final)
+    cv.imshow('hala', img_final)
     # cv.imshow('hala2', img_fin)
     # cv.imshow('hala3', seg)
     cv.waitKey(0)
