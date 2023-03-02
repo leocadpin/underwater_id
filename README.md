@@ -26,7 +26,8 @@ Please note that the datasets used in this repository are for demonstration purp
 ## Requirements
 
 The following packages are required to run the algorithms and the evaluation script:
--OpenCV
+
+- OpenCV
 - numpy
 - matplotlib
 - scikit-learn
