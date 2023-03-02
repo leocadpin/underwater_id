@@ -5,7 +5,7 @@ This repository aims to implement two methods for detecting submarine structures
 | Image 1 | Image 2 |
 | --- | --- |
 | ![Image 1]( K_means_method/images/img3.png ) | ![Image 2](K_means_method/results/colour3.png ) |
-| *Caption for Image 1* | *Caption for Image 2* |
+| *Entry image* | *Output* |
 
 
 
